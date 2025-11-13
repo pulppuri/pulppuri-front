@@ -1,52 +1,89 @@
-// Type definitions for the Okcheon Hanip app
-// These types will be used throughout the application
+// Type definitions based on backend database schema
 
-export interface User {
-  id: string
-  email: string
-  username: string
-  region?: string
-  interests?: string[]
-  createdAt: string
+// Database Tables
+export interface Region {
+  id: number
+  si_do: string
+  si_gun_gu: string
+  eup_myeon_dong: string
+  li: string
+  full_name: string
+  display_name: string
+  shorten_name: string
 }
 
-export interface Policy {
-  id: string
+export interface User {
+  id: number
+  age: number
+  job: string
+  rid: number // region id
+  gender: string
+  nickname: string
+  thumbnail?: string
+}
+
+export interface Example {
+  id: number
+  rid: number // region id
+  uid: number // user id
   title: string
-  description: string
-  category: PolicyCategory
-  region: string
-  likes: number
-  comments: number
-  bookmarks: number
-  createdAt: string
-  author: {
-    id: string
-    username: string
-  }
+  thumbnail?: string
+  content: string
+  reference?: string
+  read_cnt: number
+  created_at: number
+  updated_at: number
+  tags?: Tag[]
+  // UI state
+  likes?: number
+  comments?: number
   isLiked?: boolean
   isBookmarked?: boolean
 }
 
-export type PolicyCategory = "전체" | "교통" | "교육" | "복지" | "경제" | "청년" | "농촌"
-
-export interface Comment {
-  id: string
-  policyId: string
-  content: string
-  author: {
-    id: string
-    username: string
-  }
-  createdAt: string
-}
-
-export interface PolicyProposal {
-  id: string
+export interface Proposal {
+  id: number
+  eid?: number // example id (optional reference)
+  rid: number // region id
+  uid: number // user id
   title: string
-  description: string
-  category: PolicyCategory
-  referencePolicy?: string
-  status: "pending" | "approved" | "rejected"
-  createdAt: string
+  content: string
+  read_cnt: number
+  created_at: number
+  updated_at: number
+  tags?: Tag[]
 }
+
+export interface Tag {
+  id: number
+  name: string
+}
+
+export interface ProposalLike {
+  pid: number // proposal id
+  uid: number // user id
+}
+
+export interface ProposalComment {
+  id: number
+  pid: number // proposal id
+  uid: number // user id
+  content: string
+}
+
+export interface ProposalBookmark {
+  pid: number // proposal id
+  uid: number // user id
+}
+
+// Onboarding form data
+export interface OnboardingData {
+  nickname: string
+  age: number
+  gender: string
+  job: string
+  region: string // 읍/면 name
+}
+
+// Policy categories
+export type PolicyCategory = "전체" | "교육" | "교통" | "주거" | "농촌" | "청년" | "경제"

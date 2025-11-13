@@ -9,29 +9,38 @@ export const API_CONFIG = {
   // BASE_URL: 'https://your-server-domain.com:port/api',
 }
 
-// API endpoints
+// API endpoints matching backend DB structure
 export const API_ENDPOINTS = {
-  // Auth
-  LOGIN: "/auth/login",
-  SIGNUP: "/auth/signup",
-  LOGOUT: "/auth/logout",
+  // Auth & User
+  CREATE_USER: "/users",
+  GET_USER: "/users/:id",
+  UPDATE_USER: "/users/:id",
 
-  // Policies
-  GET_POLICIES: "/policies",
-  GET_POLICY_BY_ID: "/policies/:id",
-  CREATE_POLICY: "/policies",
-  LIKE_POLICY: "/policies/:id/like",
-  BOOKMARK_POLICY: "/policies/:id/bookmark",
+  // Regions
+  GET_REGIONS: "/regions",
+  GET_REGION_BY_NAME: "/regions/search",
 
-  // Comments
-  GET_COMMENTS: "/policies/:id/comments",
-  CREATE_COMMENT: "/policies/:id/comments",
+  // Examples (정책 사례)
+  GET_EXAMPLES: "/examples",
+  GET_EXAMPLE_BY_ID: "/examples/:id",
+  CREATE_EXAMPLE: "/examples",
+  LIKE_EXAMPLE: "/examples/:id/like",
+  BOOKMARK_EXAMPLE: "/examples/:id/bookmark",
+  GET_EXAMPLE_COMMENTS: "/examples/:id/comments",
+  CREATE_EXAMPLE_COMMENT: "/examples/:id/comments",
 
-  // User
-  GET_USER_PROFILE: "/user/profile",
-  UPDATE_USER_PROFILE: "/user/profile",
-  GET_USER_POSTS: "/user/posts",
-  GET_USER_PROPOSALS: "/user/proposals",
+  // Proposals (정책 제안)
+  GET_PROPOSALS: "/proposals",
+  GET_PROPOSAL_BY_ID: "/proposals/:id",
+  CREATE_PROPOSAL: "/proposals",
+  LIKE_PROPOSAL: "/proposals/:id/like",
+  BOOKMARK_PROPOSAL: "/proposals/:id/bookmark",
+  GET_PROPOSAL_COMMENTS: "/proposals/:id/comments",
+  CREATE_PROPOSAL_COMMENT: "/proposals/:id/comments",
+
+  // Tags
+  GET_TAGS: "/tags",
+  GET_TAGS_BY_CATEGORY: "/tags/:category",
 }
 
 // API helper functions
@@ -53,4 +62,13 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}): P
     console.error("[v0] API request failed:", error)
     throw error
   }
+}
+
+// Helper to replace :id with actual id
+export function buildEndpoint(endpoint: string, params: Record<string, string | number>): string {
+  let built = endpoint
+  Object.keys(params).forEach((key) => {
+    built = built.replace(`:${key}`, String(params[key]))
+  })
+  return built
 }

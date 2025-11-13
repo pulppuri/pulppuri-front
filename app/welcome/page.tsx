@@ -3,9 +3,19 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function WelcomePage() {
+  const router = useRouter()
+
+  const handleLogin = () => {
+    router.push("/onboarding")
+  }
+
+  const handleSignup = () => {
+    router.push("/onboarding")
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-background p-6">
       <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-12">
@@ -34,16 +44,19 @@ export default function WelcomePage() {
 
       {/* Action Buttons */}
       <div className="w-full max-w-md space-y-3 pb-8">
-        <Link href="/login" className="block">
-          <Button className="h-14 w-full bg-primary text-primary-foreground hover:bg-primary/90 text-base font-semibold shadow-lg">
-            로그인
-          </Button>
-        </Link>
-        <Link href="/signup" className="block">
-          <Button variant="outline" className="h-14 w-full text-base font-semibold border-2 bg-transparent">
-            회원가입
-          </Button>
-        </Link>
+        <Button
+          onClick={handleLogin}
+          className="h-14 w-full bg-primary text-primary-foreground hover:bg-primary/90 text-base font-semibold shadow-lg"
+        >
+          로그인
+        </Button>
+        <Button
+          onClick={handleSignup}
+          variant="outline"
+          className="h-14 w-full text-base font-semibold border-2 bg-transparent"
+        >
+          회원가입
+        </Button>
       </div>
     </div>
   )
