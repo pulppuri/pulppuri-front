@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Search, Heart, MessageCircle, Bookmark, Menu } from 'lucide-react'
 import type { Example, PolicyCategory } from "@/types"
 import { POLICY_CATEGORIES } from "@/lib/constants"
+import { BottomNav } from "@/components/bottom-nav"
 
 // Mock data for now
 const MOCK_EXAMPLES: Example[] = [
@@ -219,38 +220,7 @@ export default function PoliciesPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="flex items-center justify-around py-2">
-          <button className="flex flex-col items-center gap-1 px-8 py-2 text-[#7c5cdb]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8 18v-1h8v1H8zm0-3v-1h8v1H8zm0-3v-1h5v1H8z" />
-            </svg>
-            <span className="text-[11px] font-medium">정책 사례</span>
-          </button>
-          <button
-            onClick={() => router.push("/proposals")}
-            className="flex flex-col items-center gap-1 px-8 py-2 text-muted-foreground"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            <span className="text-[11px]">정책 제안</span>
-          </button>
-          <button
-            onClick={() => router.push("/mypage")}
-            className="flex flex-col items-center gap-1 px-8 py-2 text-muted-foreground"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span className="text-[11px]">마이페이지</span>
-          </button>
-        </div>
-      </div>
+      <BottomNav />
     </div>
   )
 }

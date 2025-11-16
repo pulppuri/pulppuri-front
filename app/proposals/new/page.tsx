@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Check, ChevronDown } from 'lucide-react'
 import { OKCHEON_REGIONS, POLICY_CATEGORIES } from "@/lib/constants"
 
@@ -25,6 +25,7 @@ const mockAIExamples = [
 
 export default function NewProposalPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>(1)
   
   // Step 1: Basic Info
@@ -79,6 +80,13 @@ export default function NewProposalPage() {
   }
 
   const progressPercentage = (currentStep / 4) * 100
+
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category')
+    if (categoryFromUrl && POLICY_CATEGORIES.includes(categoryFromUrl as any)) {
+      setSelectedCategories([categoryFromUrl])
+    }
+  }, [searchParams])
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,13 +8,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    email: "",
+    userId: "",
     password: "",
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -24,21 +23,34 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // TODO: Backend API 연동 시 구현
-    // Example:
+    // TODO: Backend API 연동
     // const response = await fetch(`${API_BASE_URL}/auth/login`, {
     //   method: 'POST',
     //   headers: { 'Content-Type': 'application/json' },
     //   body: JSON.stringify(formData),
     // })
+    // const data = await response.json()
+    // if (response.ok) {
+    //   localStorage.setItem('user', JSON.stringify(data.user))
+    //   router.push('/policies')
+    // }
 
     console.log("[v0] Login attempt:", formData)
 
-    // Simulate API call
     setTimeout(() => {
+      const mockUser = {
+        id: 1,
+        userId: formData.userId,
+        nickname: "옥천사용자",
+        age: 25,
+        gender: "남성",
+        job: "학생",
+        region: "옥천읍",
+        rid: 1
+      }
+      localStorage.setItem("user", JSON.stringify(mockUser))
       setIsLoading(false)
-      // TODO: Handle success/error from backend
-      alert("로그인 기능은 백엔드 연동 후 활성화됩니다.")
+      router.push("/policies")
     }, 1000)
   }
 
@@ -62,13 +74,13 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="userId">아이디</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  id="userId"
+                  type="text"
+                  placeholder="아이디를 입력하세요"
+                  value={formData.userId}
+                  onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                   required
                   className="h-12"
                 />
@@ -94,18 +106,11 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground">
-                  비밀번호 찾기
-                </Link>
-              </div>
-              <div className="text-center text-sm text-muted-foreground">
-                계정이 없으신가요?{" "}
-                <Link href="/signup" className="font-semibold text-primary hover:underline">
-                  회원가입
-                </Link>
-              </div>
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              계정이 없으신가요?{" "}
+              <Link href="/signup" className="font-semibold text-primary hover:underline">
+                회원가입
+              </Link>
             </div>
           </CardContent>
         </Card>

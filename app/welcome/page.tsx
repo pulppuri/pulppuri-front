@@ -3,17 +3,17 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 
 export default function WelcomePage() {
   const router = useRouter()
 
   const handleLogin = () => {
-    router.push("/onboarding")
+    router.push("/login")
   }
 
   const handleSignup = () => {
-    router.push("/onboarding")
+    router.push("/signup")
   }
 
   return (

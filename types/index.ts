@@ -85,5 +85,16 @@ export interface OnboardingData {
   region: string // 읍/면 name
 }
 
+export interface SignupData {
+  userId: string
+  password: string
+  passwordConfirm: string
+  nickname: string
+  age: number
+  gender: string
+  job: string
+  region: string
+}
+
 // Policy categories
 export type PolicyCategory = "전체" | "교육" | "교통" | "주거" | "농촌" | "청년" | "경제"

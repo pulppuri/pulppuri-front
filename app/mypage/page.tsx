@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Bell, Shield, HelpCircle, LogOut, MessageCircle, Heart } from 'lucide-react'
+import { BottomNav } from "@/components/bottom-nav"
 
 export default function MyPage() {
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function MyPage() {
       id: 1,
       title: "마을공동도서관 건립 요청",
       category: "교육",
-      preview: "어린이와 청소년을 위한 도서관을...",
+      preview: "어린이와 청년을 위한 도서관을...",
       agreeCount: 100,
       commentCount: 50
     },
@@ -54,8 +55,8 @@ export default function MyPage() {
   ]
 
   const handleLogout = () => {
-    // TODO: Implement logout logic with backend
-    console.log("[v0] Logout clicked")
+    localStorage.removeItem("user")
+    console.log("[v0] User logged out")
     router.push("/welcome")
   }
 
@@ -91,27 +92,29 @@ export default function MyPage() {
                   ))}
                 </div>
               </div>
-              <button className="w-full rounded-lg bg-muted py-2 text-sm font-medium transition-colors hover:bg-muted/80">
+              <button 
+                onClick={() => router.push("/mypage/edit")}
+                className="w-full rounded-lg bg-muted py-2 text-sm font-medium transition-colors hover:bg-muted/80"
+              >
                 프로필 편집
               </button>
             </div>
           </div>
         </div>
 
-        {/* Activity Stats */}
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-bold">활동 현황</h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="mb-1 text-3xl font-bold text-blue-600">{user.proposalCount}</div>
+              <div className="mb-1 text-2xl font-bold text-purple-600">{user.proposalCount}</div>
               <div className="text-sm text-muted-foreground">정책 제안</div>
             </div>
             <div className="text-center">
-              <div className="mb-1 text-3xl font-bold text-green-600">{user.commentCount}</div>
+              <div className="mb-1 text-2xl font-bold text-purple-600">{user.commentCount}</div>
               <div className="text-sm text-muted-foreground">댓글 작성</div>
             </div>
             <div className="text-center">
-              <div className="mb-1 text-3xl font-bold text-red-600">{user.likeCount}</div>
+              <div className="mb-1 text-2xl font-bold text-purple-600">{user.likeCount}</div>
               <div className="text-sm text-muted-foreground">받은 좋아요</div>
             </div>
           </div>
@@ -221,34 +224,7 @@ export default function MyPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t bg-white">
-        <div className="mx-auto flex max-w-md items-center justify-around py-2">
-          <button
-            onClick={() => router.push("/policies")}
-            className="flex flex-col items-center gap-1 px-6 py-2 transition-colors hover:bg-muted/50 rounded-lg"
-          >
-            <svg className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="text-xs text-muted-foreground">정책 사례</span>
-          </button>
-          <button
-            onClick={() => router.push("/proposals")}
-            className="flex flex-col items-center gap-1 px-6 py-2 transition-colors hover:bg-muted/50 rounded-lg"
-          >
-            <svg className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            <span className="text-xs text-muted-foreground">정책 제안</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 px-6 py-2 rounded-lg bg-[#d3c1ff]/20">
-            <svg className="h-6 w-6 text-[#8b5cf6]" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
-            <span className="text-xs font-medium text-[#8b5cf6]">마이페이지</span>
-          </button>
-        </div>
-      </nav>
+      <BottomNav />
     </div>
   )
 }

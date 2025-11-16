@@ -160,8 +160,9 @@ export default function PolicyDetailPage() {
   }
 
   const handleProposePolicy = () => {
-    // TODO: Navigate to policy proposal page with this example as reference
-    router.push(`/proposals/new?exampleId=${example.id}`)
+    // Extract the first tag as the category to pre-select
+    const categoryTag = example.tags?.[0]?.name || ""
+    router.push(`/proposals/new?exampleId=${example.id}&category=${encodeURIComponent(categoryTag)}`)
   }
 
   const handleProposalClick = (proposalId: number) => {

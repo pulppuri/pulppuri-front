@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import Image from "next/image"
 
 export default function SplashScreen() {
@@ -9,12 +9,28 @@ export default function SplashScreen() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate app initialization
-    const timer = setTimeout(() => {
+    const checkAuth = () => {
+      const userStr = localStorage.getItem("user")
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          if (user.id) {
+            // User is already logged in, redirect to policies page
+            router.push("/policies")
+            return
+          }
+        } catch (e) {
+          console.error("[v0] Failed to parse user data:", e)
+          localStorage.removeItem("user")
+        }
+      }
+      
+      // No valid session, show welcome page
       setIsLoading(false)
       router.push("/welcome")
-    }, 2500)
+    }
 
+    const timer = setTimeout(checkAuth, 2000)
     return () => clearTimeout(timer)
   }, [router])
 

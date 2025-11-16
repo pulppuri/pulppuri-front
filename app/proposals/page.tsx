@@ -4,10 +4,9 @@ import { useState } from "react"
 import { useRouter } from 'next/navigation'
 import { Search, Heart, MessageCircle, Bookmark, ChevronDown } from 'lucide-react'
 import type { Proposal, PolicyCategory } from "@/types"
+import { BottomNav } from "@/components/bottom-nav"
+import { POLICY_CATEGORIES } from "@/lib/constants"
 
-const categories: PolicyCategory[] = ["전체", "교육", "교통", "주거", "농촌", "청년", "경제"]
-
-// Mock data - TODO: Replace with API call
 const mockProposals: (Proposal & { 
   likes: number
   comments: number
@@ -106,7 +105,7 @@ export default function ProposalsPage() {
 
         {/* Category Tabs */}
         <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
-          {categories.map((category) => (
+          {POLICY_CATEGORIES.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
@@ -224,39 +223,7 @@ export default function ProposalsPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-background">
-        <div className="flex items-center justify-around py-2">
-          <button
-            onClick={() => router.push("/policies")}
-            className="flex flex-col items-center gap-1 py-2 text-muted-foreground transition-colors"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
-            <span className="text-xs">정책 사례</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 py-2 text-[#7c3aed] transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="3" y="3" width="8" height="8" rx="1" />
-              <rect x="13" y="3" width="8" height="8" rx="1" />
-              <rect x="3" y="13" width="8" height="8" rx="1" />
-              <rect x="13" y="13" width="8" height="8" rx="1" />
-            </svg>
-            <span className="text-xs font-medium">정책 제안</span>
-          </button>
-          <button
-            onClick={() => router.push("/mypage")}
-            className="flex flex-col items-center gap-1 py-2 text-muted-foreground transition-colors"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span className="text-xs">마이페이지</span>
-          </button>
-        </div>
-      </nav>
+      <BottomNav />
     </div>
   )
 }
