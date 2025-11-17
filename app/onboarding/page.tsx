@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { OKCHEON_REGIONS, GENDER_OPTIONS, JOB_CATEGORIES } from "@/lib/constants"
 import type { OnboardingData } from "@/types"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft } from 'lucide-react'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -20,7 +20,10 @@ export default function OnboardingPage() {
     gender: "",
     job: "",
     region: "",
+    interests: [],
   })
+
+  const interestCategories = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
   const handleNext = () => {
     if (step === 1 && !formData.nickname) {
@@ -43,8 +46,12 @@ export default function OnboardingPage() {
       alert("거주 지역을 선택해주세요.")
       return
     }
+    if (step === 6 && formData.interests.length === 0) {
+      alert("관심 분야를 최소 1개 이상 선택해주세요.")
+      return
+    }
 
-    if (step < 5) {
+    if (step < 6) {
       setStep(step + 1)
     } else {
       handleSubmit()
@@ -57,6 +64,15 @@ export default function OnboardingPage() {
     } else {
       router.back()
     }
+  }
+
+  const handleInterestToggle = (interest: string) => {
+    setFormData(prev => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter(i => i !== interest)
+        : [...prev.interests, interest]
+    }))
   }
 
   const handleSubmit = async () => {
@@ -92,7 +108,7 @@ export default function OnboardingPage() {
         </Button>
         <div className="flex-1">
           <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"}`}
@@ -201,11 +217,36 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
+
+          {step === 6 && (
+            <div className="space-y-6">
+              <h1 className="text-balance text-2xl font-bold">관심 분야를 선택해주세요.</h1>
+              <p className="text-sm text-muted-foreground">
+                관심 있는 정책 분야를 선택하면 맞춤형 정책 정보를 받아볼 수 있습니다.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {interestCategories.map((interest) => (
+                  <button
+                    key={interest}
+                    type="button"
+                    onClick={() => handleInterestToggle(interest)}
+                    className={`rounded-full px-6 py-3 text-sm font-medium transition-colors ${
+                      formData.interests.includes(interest)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-white text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {interest}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bottom Button */}
         <Button onClick={handleNext} className="h-14 w-full bg-primary text-lg font-semibold hover:bg-primary/90">
-          {step === 5 ? "확인" : "다음"}
+          {step === 6 ? "확인" : "다음"}
         </Button>
       </div>
     </div>

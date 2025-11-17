@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 
@@ -14,8 +14,20 @@ export default function EditProfilePage() {
     interests: ["청년", "주거"]
   })
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      setFormData({
+        nickname: userData.nickname || "옥천옥천",
+        region: userData.region || "옥천읍",
+        interests: userData.interests || ["청년", "주거"],
+      })
+    }
+  }, [])
+
   const regions = ["옥천읍", "동이면", "안남면", "안내면", "청성면", "청산면", "이원면"]
-  const interestOptions = ["교육", "교통", "주거", "농촌", "청년", "문화"]
+  const interestOptions = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
   const handleInterestToggle = (interest: string) => {
     setFormData(prev => ({
@@ -27,7 +39,15 @@ export default function EditProfilePage() {
   }
 
   const handleSave = () => {
-    // TODO: Save to backend
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      const updatedUser = {
+        ...userData,
+        ...formData
+      }
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+    }
     console.log("[v0] Profile updated:", formData)
     router.back()
   }

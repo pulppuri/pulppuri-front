@@ -20,6 +20,7 @@ export interface User {
   gender: string
   nickname: string
   thumbnail?: string
+  interests?: string[] // Added interests field for user preferences
 }
 
 export interface Example {
@@ -83,6 +84,7 @@ export interface OnboardingData {
   gender: string
   job: string
   region: string // 읍/면 name
+  interests: string[] // Added interests field for onboarding flow
 }
 
 export interface SignupData {

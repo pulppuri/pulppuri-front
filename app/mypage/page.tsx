@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Bell, Shield, HelpCircle, LogOut, MessageCircle, Heart } from 'lucide-react'
 import { BottomNav } from "@/components/bottom-nav"
@@ -8,9 +8,7 @@ import { BottomNav } from "@/components/bottom-nav"
 export default function MyPage() {
   const router = useRouter()
   const [notificationEnabled, setNotificationEnabled] = useState(true)
-
-  // Mock user data - TODO: Replace with actual user data from backend
-  const user = {
+  const [user, setUser] = useState({
     id: 1,
     nickname: "옥천옥천",
     region: "옥천읍",
@@ -18,7 +16,20 @@ export default function MyPage() {
     proposalCount: 3,
     commentCount: 12,
     likeCount: 47
-  }
+  })
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      setUser(prev => ({
+        ...prev,
+        nickname: userData.nickname || prev.nickname,
+        region: userData.region || prev.region,
+        interests: userData.interests || prev.interests,
+      }))
+    }
+  }, [])
 
   // Mock posts data - TODO: Fetch from backend
   const myPosts = [
