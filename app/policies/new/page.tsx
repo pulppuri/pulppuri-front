@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronLeft, LinkIcon } from 'lucide-react'
-import { OKCHEON_REGIONS } from "@/lib/constants"
 import type { PolicyCategory } from "@/types"
 
 const POLICY_FIELDS: PolicyCategory[] = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
@@ -155,21 +154,16 @@ export default function NewPolicyPage() {
           </div>
         </div>
 
-        {/* Region */}
+        {/* Region - Changed from select dropdown to text input */}
         <div className="space-y-3">
           <label className="text-[14px] font-medium text-gray-900">정책 지역</label>
-          <select
+          <input
+            type="text"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-[14px] text-gray-900 focus:border-[#b69df8] focus:outline-none focus:ring-1 focus:ring-[#b69df8]"
-          >
-            <option value="">지역 선택</option>
-            {OKCHEON_REGIONS.map((reg) => (
-              <option key={reg} value={reg}>
-                {reg}
-              </option>
-            ))}
-          </select>
+            placeholder="지역을 입력하세요"
+            className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-[14px] text-gray-900 placeholder:text-gray-400 focus:border-[#b69df8] focus:outline-none focus:ring-1 focus:ring-[#b69df8]"
+          />
         </div>
 
         {/* Summary */}
