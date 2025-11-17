@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, Heart, MessageCircle, Bookmark, Menu } from 'lucide-react'
+import { Search, Heart, MessageCircle, Bookmark, SlidersHorizontal, Plus, ChevronDown, ArrowUpDown } from 'lucide-react'
 import type { Example, PolicyCategory } from "@/types"
 import { POLICY_CATEGORIES } from "@/lib/constants"
 import { BottomNav } from "@/components/bottom-nav"
@@ -42,7 +42,7 @@ const MOCK_EXAMPLES: Example[] = [
     created_at: Date.now(),
     updated_at: Date.now(),
     tags: [
-      { id: 3, name: "김천" },
+      { id: 3, name: "문화" },
       { id: 4, name: "운송" },
     ],
     likes: 50,
@@ -100,34 +100,36 @@ export default function PoliciesPage() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-[#f5f5f5]">
       {/* Header with Search */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex items-center gap-3 p-4">
-          <Search className="h-5 w-5 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="지역, 정책 검색"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Menu className="h-5 w-5" />
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-2.5 p-3.5">
+          <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-[#fafafa] px-3.5 py-2.5 border border-gray-100">
+            <Search className="h-[18px] w-[18px] text-gray-400 stroke-[1.5]" />
+            <input
+              type="text"
+              placeholder="지역, 정책 검색"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 border-0 bg-transparent text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            />
+          </div>
+          <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-gray-50">
+            <SlidersHorizontal className="h-[18px] w-[18px] text-gray-400 stroke-[1.5]" />
           </Button>
         </div>
 
         {/* Category Tabs */}
-        <div className="overflow-x-auto scrollbar-hide px-4 pb-3">
+        <div className="overflow-x-auto scrollbar-hide px-3.5 pb-2.5">
           <div className="flex gap-2">
             {POLICY_CATEGORIES.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`shrink-0 rounded-full px-5 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
                   selectedCategory === category
-                    ? "bg-[#d3c1ff] text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-[#b69df8] text-white"
+                    : "bg-[#f5f5f5] text-black hover:bg-[#efefef]"
                 }`}
               >
                 {category}
@@ -136,38 +138,39 @@ export default function PoliciesPage() {
           </div>
         </div>
 
-        {/* Sort Button */}
-        <div className="flex justify-end px-4 pb-3">
-          <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground h-8">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" className="opacity-60">
-              <path d="M3 8V2h1v6h1l-1.5 2L2 8h1zm4-6v6H6v1.5L4.5 8 6 6.5V8h1V2h1z" />
-            </svg>
+        <div className="flex justify-end px-3.5 pb-2.5">
+          <button className="flex items-center gap-1.5 rounded-full border border-[#d0d0d0] bg-white px-3 py-1.5 text-sm text-[#666666] hover:bg-gray-50 transition-colors">
+            <ArrowUpDown className="h-3.5 w-3.5" />
             최신순
-          </Button>
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Policy Cards */}
-      <div className="flex-1 space-y-4 p-4 pb-20">
+      <div className="flex-1 space-y-3 p-4 pb-24">
         {filteredExamples.map((example) => (
-          <Card key={example.id} className="overflow-hidden border-0 shadow-sm">
+          <Card key={example.id} className="overflow-hidden border-0 shadow-sm bg-white rounded-xl">
             {/* Thumbnail */}
             <div onClick={() => handleCardClick(example.id)} className="cursor-pointer">
-              <div className="relative aspect-[16/9] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
+              <div className="relative aspect-[2/1] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
                 <div className="flex h-full items-center justify-center">
-                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
-                    <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
-                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4" />
-                    <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
+                    <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.5" />
+                    <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
                   </svg>
                 </div>
                 
                 {/* Tags positioned at bottom left of thumbnail */}
-                <div className="absolute bottom-3 left-3 flex gap-2">
-                  {example.tags?.slice(0, 2).map((tag) => (
+                <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
+                  <span className="rounded bg-white px-2 py-0.5 text-xs font-medium text-black">
+                    {example.reference}
+                  </span>
+                  {example.tags?.slice(0, 1).map((tag) => (
                     <span 
                       key={tag.id} 
-                      className="rounded bg-white/90 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-foreground shadow-sm"
+                      className="rounded bg-[#b69df8] px-2 py-0.5 text-xs font-medium text-white"
                     >
                       {tag.name}
                     </span>
@@ -176,27 +179,27 @@ export default function PoliciesPage() {
               </div>
 
               {/* Content */}
-              <div className="space-y-3 p-4">
+              <div className="space-y-2 p-3">
                 {/* Title */}
-                <h3 className="text-pretty text-[15px] font-semibold leading-snug">{example.title}</h3>
+                <h3 className="text-pretty text-[14px] font-semibold leading-snug text-black">{example.title}</h3>
               </div>
             </div>
 
-            <div className="px-4 pb-4">
+            <div className="px-3 pb-2.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 text-sm text-[#929292]">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       handleLike(example.id)
                     }}
-                    className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+                    className="flex items-center gap-1 transition-colors hover:text-[#b69df8]"
                   >
-                    <Heart className={`h-[18px] w-[18px] ${example.isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                    <Heart className={`h-[17px] w-[17px] ${example.isLiked ? "fill-[#b69df8] text-[#b69df8]" : ""}`} />
                     <span className="text-[13px]">{example.likes || 0}</span>
                   </button>
-                  <button className="flex items-center gap-1.5 transition-colors hover:text-foreground">
-                    <MessageCircle className="h-[18px] w-[18px]" />
+                  <button className="flex items-center gap-1 transition-colors hover:text-[#b69df8]">
+                    <MessageCircle className="h-[17px] w-[17px]" />
                     <span className="text-[13px]">{example.comments || 0}</span>
                   </button>
                 </div>
@@ -205,11 +208,11 @@ export default function PoliciesPage() {
                     e.stopPropagation()
                     handleBookmark(example.id)
                   }}
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#b69df8]"
                 >
                   <Bookmark
-                    className={`h-5 w-5 ${
-                      example.isBookmarked ? "fill-primary text-primary" : "text-muted-foreground"
+                    className={`h-[18px] w-[18px] ${
+                      example.isBookmarked ? "fill-[#b69df8] text-[#b69df8]" : "text-[#929292]"
                     }`}
                   />
                 </button>
@@ -218,6 +221,16 @@ export default function PoliciesPage() {
           </Card>
         ))}
       </div>
+
+      <button
+        onClick={() => {
+          // TODO: Navigate to add policy example page
+          console.log("[v0] Add policy example button clicked")
+        }}
+        className="fixed bottom-20 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-[#b69df8] text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       {/* Bottom Navigation */}
       <BottomNav />

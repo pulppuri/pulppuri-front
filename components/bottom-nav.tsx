@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter, usePathname } from 'next/navigation'
+import { Compass, Grid3x3, User } from 'lucide-react'
 
 export function BottomNav() {
   const router = useRouter()
@@ -20,33 +21,26 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white">
+      <div className="flex h-16 items-center justify-around">
         {/* 정책 사례 */}
         <button
           onClick={() => router.push('/policies')}
-          className={`flex flex-col items-center gap-1 px-8 py-2 transition-colors ${
-            isActive('/policies') ? 'text-[#8b5cf6]' : 'text-muted-foreground'
-          }`}
+          className="flex flex-col items-center justify-center gap-1 transition-colors min-w-[80px]"
         >
-          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${
-            isActive('/policies') ? 'bg-[#8b5cf6]' : 'bg-transparent'
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            isActive('/policies') ? 'bg-[#6366f1]' : ''
           }`}>
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className={isActive('/policies') ? 'text-white' : 'text-muted-foreground'}
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+            <Compass 
+              className={`h-5 w-5 ${
+                isActive('/policies') ? 'text-white' : 'text-[#9ca3af]'
+              }`}
+              strokeWidth={2}
+            />
           </div>
-          <span className={`text-[11px] leading-none ${isActive('/policies') ? 'font-medium' : ''}`}>
+          <span className={`text-[11px] leading-none ${
+            isActive('/policies') ? 'font-semibold text-black' : 'font-normal text-[#9ca3af]'
+          }`}>
             정책 사례
           </span>
         </button>
@@ -54,26 +48,19 @@ export function BottomNav() {
         {/* 정책 제안 */}
         <button
           onClick={() => router.push('/proposals')}
-          className={`flex flex-col items-center gap-1 px-8 py-2 transition-colors ${
-            isActive('/proposals') ? 'text-[#8b5cf6]' : 'text-muted-foreground'
-          }`}
+          className="flex flex-col items-center justify-center gap-1 transition-colors min-w-[80px]"
         >
-          <div className="flex h-6 w-6 items-center justify-center">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isActive('/proposals') ? 'currentColor' : 'none'}
-              stroke={isActive('/proposals') ? 'none' : 'currentColor'}
-              strokeWidth="2"
-            >
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
+          <div className="flex items-center justify-center w-8 h-8">
+            <Grid3x3 
+              className={`h-6 w-6 ${
+                isActive('/proposals') ? 'text-[#6366f1]' : 'text-[#9ca3af]'
+              }`}
+              strokeWidth={1.5}
+            />
           </div>
-          <span className={`text-[11px] leading-none ${isActive('/proposals') ? 'font-medium' : ''}`}>
+          <span className={`text-[11px] leading-none ${
+            isActive('/proposals') ? 'font-semibold text-black' : 'font-normal text-[#9ca3af]'
+          }`}>
             정책 제안
           </span>
         </button>
@@ -81,33 +68,19 @@ export function BottomNav() {
         {/* 마이페이지 */}
         <button
           onClick={() => router.push('/mypage')}
-          className={`flex flex-col items-center gap-1 px-8 py-2 transition-colors ${
-            isActive('/mypage') ? 'text-[#8b5cf6]' : 'text-muted-foreground'
-          }`}
+          className="flex flex-col items-center justify-center gap-1 transition-colors min-w-[80px]"
         >
-          <div className="flex h-6 w-6 items-center justify-center">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isActive('/mypage') ? 'currentColor' : 'none'}
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              {isActive('/mypage') ? (
-                <>
-                  <circle cx="12" cy="8" r="5" fill="currentColor" />
-                  <path d="M3 21c0-4 4-7 9-7s9 3 9 7" fill="currentColor" />
-                </>
-              ) : (
-                <>
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </>
-              )}
-            </svg>
+          <div className="flex items-center justify-center w-8 h-8">
+            <User 
+              className={`h-6 w-6 ${
+                isActive('/mypage') ? 'text-[#6366f1]' : 'text-[#9ca3af]'
+              }`}
+              strokeWidth={1.5}
+            />
           </div>
-          <span className={`text-[11px] leading-none ${isActive('/mypage') ? 'font-medium' : ''}`}>
+          <span className={`text-[11px] leading-none ${
+            isActive('/mypage') ? 'font-semibold text-black' : 'font-normal text-[#9ca3af]'
+          }`}>
             마이페이지
           </span>
         </button>
