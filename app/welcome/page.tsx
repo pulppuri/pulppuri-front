@@ -8,11 +8,7 @@ import { useRouter } from 'next/navigation'
 export default function WelcomePage() {
   const router = useRouter()
 
-  const handleLogin = () => {
-    router.push("/login")
-  }
-
-  const handleSignup = () => {
+  const handleStart = () => {
     router.push("/signup")
   }
 
@@ -42,21 +38,17 @@ export default function WelcomePage() {
         </Card>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <div className="w-full max-w-md space-y-3 pb-8">
         <Button
-          onClick={handleLogin}
+          onClick={handleStart}
           className="h-14 w-full bg-primary text-primary-foreground hover:bg-primary/90 text-base font-semibold shadow-lg"
         >
-          로그인
+          시작하기
         </Button>
-        <Button
-          onClick={handleSignup}
-          variant="outline"
-          className="h-14 w-full text-base font-semibold border-2 bg-transparent"
-        >
-          회원가입
-        </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          시작하기를 누르면 간단한 정보 입력 후 바로 이용할 수 있습니다
+        </p>
       </div>
     </div>
   )

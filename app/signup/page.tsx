@@ -9,15 +9,21 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { OKCHEON_REGIONS, GENDER_OPTIONS, JOB_CATEGORIES } from "@/lib/constants"
 import { ArrowLeft } from 'lucide-react'
 import Image from "next/image"
-import type { SignupData } from "@/types"
 
-export default function SignupPage() {
+interface OnboardingData {
+  nickname: string
+  age: number
+  gender: string
+  job: string
+  region: string
+  interests: string[]
+}
+
+export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState<SignupData>({
-    userId: "",
-    password: "",
-    passwordConfirm: "",
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState<OnboardingData>({
     nickname: "",
     age: 0,
     gender: "",
@@ -29,57 +35,32 @@ export default function SignupPage() {
   const interestCategories = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
   const handleNext = () => {
-    // Validation for each step
-    if (step === 1) {
-      if (!formData.userId) {
-        alert("아이디를 입력해주세요.")
-        return
-      }
-      if (formData.userId.length < 4) {
-        alert("아이디는 4자 이상이어야 합니다.")
-        return
-      }
-    }
-    if (step === 2) {
-      if (!formData.password) {
-        alert("비밀번호를 입력해주세요.")
-        return
-      }
-      if (formData.password.length < 6) {
-        alert("비밀번호는 6자 이상이어야 합니다.")
-        return
-      }
-      if (formData.password !== formData.passwordConfirm) {
-        alert("비밀번호가 일치하지 않습니다.")
-        return
-      }
-    }
-    if (step === 3 && !formData.nickname) {
+    if (step === 1 && !formData.nickname) {
       alert("이름을 입력해주세요.")
       return
     }
-    if (step === 4 && !formData.age) {
+    if (step === 2 && !formData.age) {
       alert("나이를 입력해주세요.")
       return
     }
-    if (step === 5 && !formData.gender) {
+    if (step === 3 && !formData.gender) {
       alert("성별을 선택해주세요.")
       return
     }
-    if (step === 6 && !formData.job) {
+    if (step === 4 && !formData.job) {
       alert("직업을 선택해주세요.")
       return
     }
-    if (step === 7 && !formData.region) {
+    if (step === 5 && !formData.region) {
       alert("거주 지역을 선택해주세요.")
       return
     }
-    if (step === 8 && formData.interests.length === 0) {
+    if (step === 6 && formData.interests.length === 0) {
       alert("관심 분야를 최소 1개 이상 선택해주세요.")
       return
     }
 
-    if (step < 8) {
+    if (step < 6) {
       setStep(step + 1)
     } else {
       handleSubmit()
@@ -104,43 +85,49 @@ export default function SignupPage() {
   }
 
   const handleSubmit = async () => {
-    // TODO: Backend API 연동
-    // const response = await fetch(`${API_CONFIG.BASE_URL}/users`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     userId: formData.userId,
-    //     password: formData.password,
-    //     nickname: formData.nickname,
-    //     age: formData.age,
-    //     gender: formData.gender,
-    //     job: formData.job,
-    //     region: formData.region
-    //   }),
-    // })
-    // const data = await response.json()
-    // if (response.ok) {
-    //   localStorage.setItem('user', JSON.stringify(data.user))
-    //   router.push('/policies')
-    // }
+    setIsLoading(true)
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+      const response = await fetch(`${apiUrl}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: formData.nickname,
+          age: formData.age,
+          gender: formData.gender,
+          job: formData.job,
+          region: formData.region,
+          interests: formData.interests,
+        }),
+      })
 
-    console.log("[v0] Signup completed:", formData)
+      if (!response.ok) {
+        throw new Error('사용자 생성 실패')
+      }
 
-    // Mock user creation and save to localStorage
-    const newUser = {
-      id: Math.floor(Math.random() * 10000),
-      userId: formData.userId,
-      nickname: formData.nickname,
-      age: formData.age,
-      gender: formData.gender,
-      job: formData.job,
-      region: formData.region,
-      interests: formData.interests,
-      rid: 1,
+      const data = await response.json()
+      
+      const user = {
+        userid: data.userid || data.userId || data.id,
+        nickname: formData.nickname,
+        age: formData.age,
+        gender: formData.gender,
+        job: formData.job,
+        region: formData.region,
+        interests: formData.interests,
+      }
+
+      localStorage.setItem("user", JSON.stringify(user))
+      console.log("[v0] Onboarding completed, userid saved:", user.userid)
+      
+      router.push("/policies")
+    } catch (error) {
+      console.error("[v0] Onboarding error:", error)
+      alert("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsLoading(false)
     }
-
-    localStorage.setItem("user", JSON.stringify(newUser))
-    router.push("/policies")
   }
 
   return (
@@ -153,7 +140,7 @@ export default function SignupPage() {
         <Image src="/images/logo.png" alt="옥천 한입" width={120} height={48} />
         <div className="flex-1">
           <div className="flex gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"}`}
@@ -166,49 +153,13 @@ export default function SignupPage() {
       {/* Content */}
       <div className="flex flex-1 flex-col justify-between p-6">
         <div className="space-y-8">
-          {/* Step 1: User ID */}
+          {/* Step 1: Name */}
           {step === 1 && (
             <div className="space-y-6">
-              <h1 className="text-balance text-2xl font-bold">아이디를 입력해주세요.</h1>
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="아이디 입력 (4자 이상)"
-                  value={formData.userId}
-                  onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                  className="h-14 bg-white"
-                />
+              <div>
+                <h1 className="text-balance text-2xl font-bold mb-2">환영합니다!</h1>
+                <p className="text-muted-foreground">이름을 알려주세요.</p>
               </div>
-            </div>
-          )}
-
-          {/* Step 2: Password */}
-          {step === 2 && (
-            <div className="space-y-6">
-              <h1 className="text-balance text-2xl font-bold">비밀번호를 설정해주세요.</h1>
-              <div className="space-y-4">
-                <Input
-                  type="password"
-                  placeholder="비밀번호 입력 (6자 이상)"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="h-14 bg-white"
-                />
-                <Input
-                  type="password"
-                  placeholder="비밀번호 확인"
-                  value={formData.passwordConfirm}
-                  onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
-                  className="h-14 bg-white"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Name */}
-          {step === 3 && (
-            <div className="space-y-6">
-              <h1 className="text-balance text-2xl font-bold">이름을 알려주세요.</h1>
               <div className="space-y-2">
                 <Input
                   type="text"
@@ -221,8 +172,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 4: Age */}
-          {step === 4 && (
+          {/* Step 2: Age */}
+          {step === 2 && (
             <div className="space-y-6">
               <h1 className="text-balance text-2xl font-bold">나이를 알려주세요.</h1>
               <div className="space-y-2">
@@ -237,8 +188,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 5: Gender */}
-          {step === 5 && (
+          {/* Step 3: Gender */}
+          {step === 3 && (
             <div className="space-y-6">
               <h1 className="text-balance text-2xl font-bold">성별을 선택해주세요.</h1>
               <RadioGroup
@@ -258,8 +209,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 6: Job (with scroll picker) */}
-          {step === 6 && (
+          {/* Step 4: Job */}
+          {step === 4 && (
             <div className="space-y-6">
               <h1 className="text-balance text-2xl font-bold">직업을 선택해주세요.</h1>
               <div className="space-y-2">
@@ -288,8 +239,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 7: Region */}
-          {step === 7 && (
+          {/* Step 5: Region */}
+          {step === 5 && (
             <div className="space-y-6">
               <h1 className="text-balance text-2xl font-bold">거주 중인 지역은 어디인가요?</h1>
               <div className="space-y-2">
@@ -318,8 +269,8 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 8: Interests */}
-          {step === 8 && (
+          {/* Step 6: Interests */}
+          {step === 6 && (
             <div className="space-y-6">
               <h1 className="text-balance text-2xl font-bold">관심 분야를 선택해주세요.</h1>
               <p className="text-sm text-muted-foreground">
@@ -346,8 +297,12 @@ export default function SignupPage() {
         </div>
 
         {/* Bottom Button */}
-        <Button onClick={handleNext} className="h-14 w-full bg-primary text-lg font-semibold hover:bg-primary/90">
-          {step === 8 ? "완료" : "다음"}
+        <Button 
+          onClick={handleNext} 
+          disabled={isLoading}
+          className="h-14 w-full bg-primary text-lg font-semibold hover:bg-primary/90"
+        >
+          {isLoading ? "처리 중..." : step === 6 ? "시작하기" : "다음"}
         </Button>
       </div>
     </div>

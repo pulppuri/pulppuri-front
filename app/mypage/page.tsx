@@ -67,8 +67,8 @@ export default function MyPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("user")
-    console.log("[v0] User logged out")
-    router.push("/welcome")
+    console.log("[v0] User logged out, redirecting to onboarding")
+    router.push("/signup")
   }
 
   return (

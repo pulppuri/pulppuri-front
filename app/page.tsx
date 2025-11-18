@@ -14,8 +14,8 @@ export default function SplashScreen() {
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
-          if (user.id) {
-            // User is already logged in, redirect to policies page
+          if (user.userid) {
+            console.log("[v0] User found in localStorage, auto-login:", user.userid)
             router.push("/policies")
             return
           }
@@ -25,9 +25,9 @@ export default function SplashScreen() {
         }
       }
       
-      // No valid session, show welcome page
+      console.log("[v0] No user found, redirecting to onboarding")
       setIsLoading(false)
-      router.push("/welcome")
+      router.push("/signup")
     }
 
     const timer = setTimeout(checkAuth, 2000)
