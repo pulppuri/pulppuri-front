@@ -8,50 +8,27 @@ import ReactMarkdown from 'react-markdown'
 import type { Example } from "@/types"
 
 // Mock detailed example data
-const MOCK_EXAMPLE_DETAIL: Example & {
-  fullContent: string
-  detailedContent?: string // Added markdown content field from backend
-  targetAudience: string[]
-  mainContent: {
-    housing: string[]
-    startup: string[]
-    mentalHealth: string[]
-  }
-  articleUrl?: string
-  relatedProposals: Array<{
-    id: number
-    user: { nickname: string; avatar?: string }
-    content: string
-    likes: number
-    comments: number
-    date: string
-  }>
-  commentsList: Array<{
-    id: number
-    user: { nickname: string; avatar?: string }
-    content: string
-    likes: number
-    date: string
-  }>
-} = {
-  id: 1,
-  rid: 1,
-  uid: 1,
-  title: "'청년 살기 좋은 지역으로' 함양군 청년 특성 강화한 정책 펼쳐",
-  content: "청년들을 위한 주거 지원과 일자리 창출 정책",
-  reference: "함양군",
-  read_cnt: 135,
-  created_at: Date.now(),
-  updated_at: Date.now(),
-  tags: [
-    { id: 2, name: "청년" },
-  ],
-  likes: 50,
-  comments: 50,
-  isLiked: false,
-  isBookmarked: false,
-  fullContent: "◯◯군이 지역 청년들의 안정적인 지원을 듣기 위해 '청년 지원정책' 종합정책을 올해 3월부터 시행한다.",
-  detailedContent: `
+const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
+  1: {
+    id: 1,
+    rid: 1,
+    uid: 1,
+    title: "'청년 살기 좋은 지역으로' 함양군 청년 특성 강화한 정책 펼쳐",
+    content: "청년들을 위한 주거 지원과 일자리 창출 정책",
+    reference: "함양군",
+    read_cnt: 135,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    tags: [
+      { id: 2, name: "청년" },
+    ],
+    likes: 50,
+    comments: 50,
+    isLiked: false,
+    isBookmarked: false,
+    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IWAMerGDlj4g5FWOus2YJNEsBRgH3m.png",
+    fullContent: "◯◯군이 지역 청년들의 안정적인 지원을 듣기 위해 '청년 지원정책' 종합정책을 올해 3월부터 시행한다.",
+    detailedContent: `
 ## 정책 대상
 
 - 만 19세에서 34세 이하의 ◯◯ 거주 청년
@@ -74,92 +51,183 @@ const MOCK_EXAMPLE_DETAIL: Example & {
 
 - 취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)
 - 또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원
-  `,
-  targetAudience: [
-    "만 19세에서 34세 이하의 ◯◯ 거주 청년",
-    "취업 준비 중이거나 사회초년생, 창업을 계획 중인 청년 등",
-    "연소득 기준 이하 청년들도 포함하여 폭넓게 참여 가능",
-  ],
-  mainContent: {
-    housing: [
-      "청년 1인 가구를 위한 월세 지원(최대 20만 원, 1년간)",
-      "청년 전용 공공임대주택 100세대 공급",
+    `,
+    targetAudience: [
+      "만 19세에서 34세 이하의 ◯◯ 거주 청년",
+      "취업 준비 중이거나 사회초년생, 창업을 계획 중인 청년 등",
+      "연소득 기준 이하 청년들도 포함하여 폭넓게 참여 가능",
     ],
-    startup: [
-      "예비창업자에게 최대 1,000만 원 창업 초기자금 및 멘토 제공",
-      "공영 시설 공공 오피스·창업공간 무료 이용",
+    mainContent: {
+      housing: [
+        "청년 1인 가구를 위한 월세 지원(최대 20만 원, 1년간)",
+        "청년 전용 공공임대주택 100세대 공급",
+      ],
+      startup: [
+        "예비창업자에게 최대 1,000만 원 창업 초기자금 및 멘토 제공",
+        "공영 시설 공공 오피스·창업공간 무료 이용",
+      ],
+      mentalHealth: [
+        "취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)",
+        "또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원",
+      ],
+    },
+    articleUrl: "https://example.com/article/youth-policy",
+    relatedProposals: [
+      {
+        id: 1,
+        user: { nickname: "옥천군민" },
+        content: "옥천군에도 청년 창업 지원 확충 바랍니다.",
+        likes: 50,
+        comments: 50,
+        date: "2025.11.01",
+      },
+      {
+        id: 2,
+        user: { nickname: "청년1호" },
+        content: "청년 1인 가구 월세 지원 정책 어떠기요?",
+        likes: 50,
+        comments: 50,
+        date: "2025.11.01",
+      },
     ],
-    mentalHealth: [
-      "취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)",
-      "또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원",
+    commentsList: [
+      {
+        id: 1,
+        user: { nickname: "옥이네" },
+        content: "우리 동네에도 있으면 정말 좋겠어요!",
+        likes: 10,
+        date: "2일 전",
+      },
+      {
+        id: 2,
+        user: { nickname: "옥이네" },
+        content: "우리 동네에도 있으면 정말 좋겠어요!",
+        likes: 10,
+        date: "2일 전",
+      },
+      {
+        id: 3,
+        user: { nickname: "옥이네" },
+        content: "우리 동네에도 있으면 정말 좋겠어요!",
+        likes: 10,
+        date: "2일 전",
+      },
     ],
   },
-  articleUrl: "https://example.com/article/youth-policy",
-  relatedProposals: [
-    {
-      id: 1,
-      user: { nickname: "옥천군민" },
-      content: "옥천군에도 청년 창업 지원 확충 바랍니다.",
-      likes: 50,
-      comments: 50,
-      date: "2025.11.01",
+  2: {
+    id: 2,
+    rid: 1,
+    uid: 2,
+    title: "진짜 크게 준비해야...케데헌 열풍, 2회 김천김밥축제 대박 예열",
+    content: "김천김밥축제를 통한 지역 문화 활성화 정책",
+    reference: "김천시",
+    read_cnt: 220,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    tags: [
+      { id: 3, name: "문화" },
+    ],
+    likes: 50,
+    comments: 50,
+    isLiked: false,
+    isBookmarked: false,
+    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-ii2mhseAYrnP5i93skeBSmJHwy7T3V.png",
+    fullContent: "김천시가 지역 특산물인 김밥을 활용한 대규모 문화축제를 개최하여 지역 경제 활성화와 관광 산업 육성을 추진하고 있습니다.",
+    detailedContent: `
+## 축제 개요
+
+- 제2회 김천김밥축제가 오는 5월 김천시 중앙공원 일대에서 개최
+- 3일간 진행되며 약 10만 명의 방문객 예상
+- 다양한 김밥 요리 경연대회와 체험 프로그램 운영
+
+## 주요 프로그램
+
+### 1. 김밥 요리 경연대회
+
+- 전국 요리사들이 참여하는 창작 김밥 경연
+- 우승자에게는 상금 500만 원과 김천시 홍보대사 위촉
+
+### 2. 시민 참여 프로그램
+
+- 가족 단위 김밥 만들기 체험
+- 김천 특산물을 활용한 퓨전 김밥 시식회
+- 지역 농산물 직거래 장터 운영
+
+### 3. 문화 공연
+
+- K-POP 아티스트 초청 공연
+- 지역 문화예술단 공연
+- 야간 불꽃놀이 행사
+    `,
+    targetAudience: [
+      "김천시민 및 인근 지역 주민",
+      "전국의 요리 애호가 및 관광객",
+      "가족 단위 방문객",
+    ],
+    mainContent: {
+      housing: [],
+      startup: [],
+      mentalHealth: [],
     },
-    {
-      id: 2,
-      user: { nickname: "청년1호" },
-      content: "청년 1인 가구 월세 지원 정책 어떠기요?",
-      likes: 50,
-      comments: 50,
-      date: "2025.11.01",
-    },
-  ],
-  commentsList: [
-    {
-      id: 1,
-      user: { nickname: "옥이네" },
-      content: "우리 동네에도 있으면 정말 좋겠어요!",
-      likes: 10,
-      date: "2일 전",
-    },
-    {
-      id: 2,
-      user: { nickname: "옥이네" },
-      content: "우리 동네에도 있으면 정말 좋겠어요!",
-      likes: 10,
-      date: "2일 전",
-    },
-    {
-      id: 3,
-      user: { nickname: "옥이네" },
-      content: "우리 동네에도 있으면 정말 좋겠어요!",
-      likes: 10,
-      date: "2일 전",
-    },
-  ],
+    articleUrl: "https://example.com/article/gimcheon-festival",
+    relatedProposals: [
+      {
+        id: 3,
+        user: { nickname: "옥천음식러버" },
+        content: "옥천도 지역 특산물로 축제 만들면 좋겠어요!",
+        likes: 30,
+        comments: 20,
+        date: "2025.11.15",
+      },
+    ],
+    commentsList: [
+      {
+        id: 1,
+        user: { nickname: "김밥러버" },
+        content: "작년 축제 정말 재미있었어요! 올해도 기대됩니다!",
+        likes: 15,
+        date: "1일 전",
+      },
+      {
+        id: 2,
+        user: { nickname: "여행매니아" },
+        content: "가족과 함께 꼭 방문하고 싶네요",
+        likes: 8,
+        date: "3일 전",
+      },
+    ],
+  },
 }
 
 export default function PolicyDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [example, setExample] = useState(MOCK_EXAMPLE_DETAIL)
+  const [example, setExample] = useState<typeof MOCK_EXAMPLES_DETAIL[1] | null>(null)
   const [commentLikes, setCommentLikes] = useState<Record<number, boolean>>({})
   const [proposalLikes, setProposalLikes] = useState<Record<number, { liked: boolean; count: number }>>({})
 
   useEffect(() => {
-    // TODO: Fetch example detail from backend using params.id
-    // The backend should return detailedContent as markdown string
-    // const fetchExampleDetail = async () => {
-    //   const response = await api.get(`/examples/${params.id}`)
-    //   setExample(response.data)
-    // }
-    // fetchExampleDetail()
+    const id = Number(params.id)
+    const exampleData = MOCK_EXAMPLES_DETAIL[id]
     
-    const initialProposalLikes: Record<number, { liked: boolean; count: number }> = {}
-    example.relatedProposals.forEach((proposal) => {
-      initialProposalLikes[proposal.id] = { liked: false, count: proposal.likes }
-    })
-    setProposalLikes(initialProposalLikes)
+    if (exampleData) {
+      setExample(exampleData)
+      
+      const initialProposalLikes: Record<number, { liked: boolean; count: number }> = {}
+      exampleData.relatedProposals.forEach((proposal) => {
+        initialProposalLikes[proposal.id] = { liked: false, count: proposal.likes }
+      })
+      setProposalLikes(initialProposalLikes)
+    }
   }, [params.id])
+
+  if (!example) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    )
+  }
 
   const handleLike = () => {
     setExample({
@@ -180,7 +248,6 @@ export default function PolicyDetailPage() {
 
   const handleViewArticle = () => {
     if (example.articleUrl) {
-      // TODO: Open article URL from backend
       window.open(example.articleUrl, "_blank")
     }
   }
@@ -191,16 +258,11 @@ export default function PolicyDetailPage() {
   }
 
   const handleProposalClick = (proposalId: number) => {
-    // TODO: Fetch the policy example ID that this proposal references from backend
-    // const response = await api.get(`/proposals/${proposalId}/referenced-example`)
-    // router.push(`/policies/${response.data.exampleId}`)
-    
-    // For now, navigate to a mock policy detail page
     router.push(`/policies/${proposalId}`)
   }
 
   const handleProposalLike = (proposalId: number, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click when clicking like button
+    e.stopPropagation()
     
     setProposalLikes((prev) => {
       const current = prev[proposalId]
@@ -216,14 +278,12 @@ export default function PolicyDetailPage() {
   }
 
   const handleProposalComment = (proposalId: number, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click when clicking comment button
-    // TODO: Navigate to proposal detail page or open comment section
+    e.stopPropagation()
     router.push(`/proposals/${proposalId}`)
   }
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background px-4 py-3">
         <button onClick={() => router.back()} className="rounded-lg p-1 hover:bg-muted">
           <ChevronLeft className="h-6 w-6" />
@@ -232,233 +292,206 @@ export default function PolicyDetailPage() {
         <div className="w-8" /> {/* Spacer for centering */}
       </div>
 
-      {/* Thumbnail */}
-      <div className="relative aspect-[16/9] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
-        <div className="flex h-full items-center justify-center">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
-            <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
-            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4" />
-            <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
-          </svg>
+      {example.imageUrl ? (
+        <div className="relative aspect-[16/9] overflow-hidden">
+          <img 
+            src={example.imageUrl || "/placeholder.svg"} 
+            alt={example.title}
+            className="h-full w-full object-cover"
+          />
         </div>
-      </div>
+      ) : (
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
+          <div className="flex h-full items-center justify-center">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
+              <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4" />
+              <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+            </svg>
+          </div>
+        </div>
+      )}
 
-      {/* Content */}
       <div className="space-y-6 px-4 pt-5">
-        {/* Tags - Changed to purple background */}
         <div className="flex gap-2">
           {example.tags?.map((tag) => (
-            <span key={tag.id} className="rounded-md bg-[#c5b0ff] px-3 py-1 text-sm font-medium text-white">
+            <span key={tag.id} className="rounded-full bg-[#b4a0e5] px-3 py-1 text-sm font-medium text-white">
               {tag.name}
             </span>
           ))}
         </div>
 
-        {/* Title */}
         <h2 className="text-pretty text-xl font-bold leading-tight">{example.title}</h2>
 
-        {/* Meta Info */}
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span>{new Date(example.created_at).toLocaleDateString("ko-KR")}</span>
+          <span>{new Date(example.created_at).toLocaleDateString('ko-KR')}</span>
           <span>조회 {example.read_cnt}</span>
         </div>
 
-        {/* Summary */}
-        <p className="text-[15px] leading-relaxed text-foreground/90">{example.fullContent}</p>
+        <p className="text-base leading-relaxed">{example.fullContent}</p>
 
-        {example.detailedContent && (
-          <div className="markdown-content rounded-lg bg-muted/30 p-4">
-            <ReactMarkdown
-              components={{
-                h2: ({ children }) => (
-                  <h2 className="mb-2 mt-4 flex items-center gap-1.5 text-sm font-bold first:mt-0">
-                    <span className="flex h-5 w-5 items-center justify-center rounded bg-[#c5b0ff] text-xs text-white">
-                      📋
-                    </span>
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="mb-1 mt-3 font-semibold text-[15px]">{children}</h3>
-                ),
-                ul: ({ children }) => (
-                  <ul className="mb-3 space-y-1 pl-6 text-[15px] last:mb-0">{children}</ul>
-                ),
-                li: ({ children }) => (
-                  <li className="list-disc leading-relaxed">{children}</li>
-                ),
-                p: ({ children }) => (
-                  <p className="mb-2 text-[15px] leading-relaxed last:mb-0">{children}</p>
-                ),
-              }}
-            >
-              {example.detailedContent}
-            </ReactMarkdown>
-          </div>
-        )}
-
-        {/* Fallback: Show structured content if no markdown */}
-        {!example.detailedContent && (
-          <div className="space-y-4 rounded-lg bg-muted/30 p-4">
-            <div>
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold">
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-[#c5b0ff] text-xs text-white">
-                  📋
-                </span>
-                정책 대상
-              </h3>
-              <ul className="space-y-1 pl-6 text-[15px]">
-                {example.targetAudience.map((item, idx) => (
-                  <li key={idx} className="list-disc leading-relaxed">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold">
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-[#c5b0ff] text-xs text-white">
-                  📌
-                </span>
-                주요 내용
-              </h3>
-              <div className="space-y-3 pl-6">
-                <div>
-                  <p className="mb-1 font-semibold text-[15px]">1. 주거 안정 지원</p>
-                  <ul className="space-y-1 pl-4 text-[15px]">
-                    {example.mainContent.housing.map((item, idx) => (
-                      <li key={idx} className="list-disc leading-relaxed">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1 font-semibold text-[15px]">2. 창업 지원</p>
-                  <ul className="space-y-1 pl-4 text-[15px]">
-                    {example.mainContent.startup.map((item, idx) => (
-                      <li key={idx} className="list-disc leading-relaxed">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1 font-semibold text-[15px]">3. 마음건강 프로그램</p>
-                  <ul className="space-y-1 pl-4 text-[15px]">
-                    {example.mainContent.mentalHealth.map((item, idx) => (
-                      <li key={idx} className="list-disc leading-relaxed">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+        <div className="space-y-5 rounded-2xl bg-[#f5f5f5] p-5">
+          {/* Policy Target */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-[#b4a0e5] p-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                </svg>
               </div>
+              <h3 className="text-base font-bold">정책 대상</h3>
             </div>
+            <ul className="space-y-1 text-sm leading-relaxed">
+              {example.targetAudience.map((item, index) => (
+                <li key={index} className="flex gap-2">
+                  <span>•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
 
-        {/* Article Link */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleViewArticle}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50 active:bg-gray-100"
-          >
-            기사 원문 보러 가기
-          </button>
+          {/* Main Content */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-[#b4a0e5] p-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold">주요 내용</h3>
+            </div>
+
+            {example.mainContent.housing.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">1. 주거 안정 지원</h4>
+                <ul className="space-y-1 text-sm leading-relaxed">
+                  {example.mainContent.housing.map((item, index) => (
+                    <li key={index} className="flex gap-2">
+                      <span>•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {example.mainContent.startup.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">2. 창업 지원</h4>
+                <ul className="space-y-1 text-sm leading-relaxed">
+                  {example.mainContent.startup.map((item, index) => (
+                    <li key={index} className="flex gap-2">
+                      <span>•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {example.mainContent.mentalHealth.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">3. 마음건강 프로그램</h4>
+                <ul className="space-y-1 text-sm leading-relaxed">
+                  {example.mainContent.mentalHealth.map((item, index) => (
+                    <li key={index} className="flex gap-2">
+                      <span>•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Propose Policy Button - Darker purple color */}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleViewArticle}
+            className="flex-1 rounded-xl border-2 py-6 font-semibold hover:bg-muted"
+          >
+            기사 원문 보러 가기
+          </Button>
+        </div>
+
         <Button
           onClick={handleProposePolicy}
-          className="w-full rounded-lg bg-[#b89dff] py-6 text-base font-semibold text-white hover:bg-[#a88dff]"
+          className="w-full rounded-xl bg-[#b4a0e5] py-6 text-base font-semibold text-white hover:bg-[#a090d5]"
         >
           이 사례로 새로운 정책 제안하기
         </Button>
 
-        {/* Related Proposals Section */}
-        <div className="space-y-4 pt-4">
-          <h3 className="text-lg font-bold">이 정책을 참고한 제안</h3>
-          <div className="space-y-3">
-            {example.relatedProposals.map((proposal) => (
-              <button
-                key={proposal.id}
-                onClick={() => handleProposalClick(proposal.id)}
-                className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <span className="text-sm font-semibold text-muted-foreground">
-                      {proposal.user.nickname[0]}
-                    </span>
+        {example.relatedProposals.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold">관련 정책 제안</h3>
+            <div className="space-y-3">
+              {example.relatedProposals.map((proposal) => (
+                <div
+                  key={proposal.id}
+                  onClick={() => handleProposalClick(proposal.id)}
+                  className="cursor-pointer space-y-3 rounded-2xl bg-[#f5f5f5] p-4 transition-all hover:bg-[#eeeeee]"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#b4a0e5] to-[#d4c5f0]" />
+                    <span className="font-medium">{proposal.user.nickname}</span>
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <p className="text-[15px] leading-relaxed">{proposal.content}</p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <button
-                        onClick={(e) => handleProposalLike(proposal.id, e)}
-                        className="flex items-center gap-1 transition-colors hover:text-foreground"
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            proposalLikes[proposal.id]?.liked ? "fill-primary text-primary" : ""
-                          }`}
-                        />
-                        {proposalLikes[proposal.id]?.count || proposal.likes}
-                      </button>
-                      <button
-                        onClick={(e) => handleProposalComment(proposal.id, e)}
-                        className="flex items-center gap-1 transition-colors hover:text-foreground"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        {proposal.comments}
-                      </button>
-                      <span>{proposal.date}</span>
-                    </div>
+                  <p className="text-sm leading-relaxed">{proposal.content}</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <button
+                      onClick={(e) => handleProposalLike(proposal.id, e)}
+                      className="flex items-center gap-1 transition-colors hover:text-foreground"
+                    >
+                      <Heart
+                        className={`h-4 w-4 ${proposalLikes[proposal.id]?.liked ? "fill-red-500 text-red-500" : ""}`}
+                      />
+                      <span>{proposalLikes[proposal.id]?.count || proposal.likes}</span>
+                    </button>
+                    <button
+                      onClick={(e) => handleProposalComment(proposal.id, e)}
+                      className="flex items-center gap-1 transition-colors hover:text-foreground"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>{proposal.comments}</span>
+                    </button>
+                    <span className="ml-auto">{proposal.date}</span>
                   </div>
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Comments Section */}
-        <div className="space-y-4 pt-4">
-          <h3 className="text-lg font-bold">댓글</h3>
-          <div className="space-y-3">
-            {example.commentsList.map((comment) => (
-              <div key={comment.id} className="rounded-lg border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <span className="text-sm font-semibold text-muted-foreground">{comment.user.nickname[0]}</span>
+        {example.commentsList.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">댓글</h3>
+              <span className="text-sm text-muted-foreground">{example.commentsList.length}개</span>
+            </div>
+            <div className="space-y-4">
+              {example.commentsList.map((comment) => (
+                <div key={comment.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#b4a0e5] to-[#d4c5f0]" />
+                    <span className="font-medium">{comment.user.nickname}</span>
+                    <span className="text-sm text-muted-foreground">{comment.date}</span>
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{comment.user.nickname}</span>
-                      <span className="text-xs text-muted-foreground">{comment.date}</span>
-                    </div>
-                    <p className="text-[15px] leading-relaxed">{comment.content}</p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleCommentLike(comment.id)}
-                        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <ThumbsUp
-                          className={`h-4 w-4 ${commentLikes[comment.id] ? "fill-primary text-primary" : ""}`}
-                        />
-                        <span>{comment.likes}</span>
-                      </button>
-                      <button className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                        답글
-                      </button>
-                    </div>
-                  </div>
+                  <p className="pl-10 text-sm leading-relaxed">{comment.content}</p>
+                  <button
+                    onClick={() => handleCommentLike(comment.id)}
+                    className="flex items-center gap-1 pl-10 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${commentLikes[comment.id] ? "fill-red-500 text-red-500" : ""}`}
+                    />
+                    <span>{comment.likes + (commentLikes[comment.id] ? 1 : 0)}</span>
+                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

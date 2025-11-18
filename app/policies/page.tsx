@@ -29,12 +29,13 @@ const MOCK_EXAMPLES: Example[] = [
     comments: 50,
     isLiked: false,
     isBookmarked: false,
+    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IWAMerGDlj4g5FWOus2YJNEsBRgH3m.png",
   },
   {
     id: 2,
     rid: 1,
     uid: 2,
-    title: "전폭 크게 준비해야...계단식 열량, 2천 김천칠방속박 대박 예열",
+    title: "진짜 크게 준비해야...케데헌 열풍, 2회 김천김밥축제 대박 예열",
     content: "대중교통 개선과 지역 연결성 강화",
     reference: "김천시",
     read_cnt: 220,
@@ -42,12 +43,12 @@ const MOCK_EXAMPLES: Example[] = [
     updated_at: Date.now(),
     tags: [
       { id: 3, name: "문화" },
-      { id: 4, name: "운송" },
     ],
     likes: 50,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
+    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-ii2mhseAYrnP5i93skeBSmJHwy7T3V.png",
   },
 ]
 
@@ -152,27 +153,49 @@ export default function PoliciesPage() {
           <Card key={example.id} className="overflow-hidden border-0 shadow-sm bg-white rounded-xl">
             {/* Thumbnail */}
             <div onClick={() => handleCardClick(example.id)} className="cursor-pointer">
-              <div className="relative aspect-[2/1] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
-                <div className="flex h-full items-center justify-center">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
-                    <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.5" />
-                    <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-                  </svg>
+              {example.imageUrl ? (
+                <div className="relative aspect-[2/1] overflow-hidden">
+                  <img 
+                    src={example.imageUrl || "/placeholder.svg"} 
+                    alt={example.title}
+                    className="h-full w-full object-cover"
+                  />
+                  
+                  {/* Tags positioned at bottom left of thumbnail */}
+                  <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
+                    {example.tags?.slice(0, 2).map((tag) => (
+                      <span 
+                        key={tag.id} 
+                        className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                
-                {/* Tags positioned at bottom left of thumbnail */}
-                <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                  {example.tags?.slice(0, 2).map((tag) => (
-                    <span 
-                      key={tag.id} 
-                      className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
+              ) : (
+                <div className="relative aspect-[2/1] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
+                  <div className="flex h-full items-center justify-center">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
+                      <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.5" />
+                      <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+                    </svg>
+                  </div>
+                  
+                  {/* Tags positioned at bottom left of thumbnail */}
+                  <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
+                    {example.tags?.slice(0, 2).map((tag) => (
+                      <span 
+                        key={tag.id} 
+                        className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Content */}
               <div className="space-y-2 p-3">

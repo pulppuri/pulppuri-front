@@ -35,6 +35,7 @@ export interface Example {
   created_at: number
   updated_at: number
   tags?: Tag[]
+  imageUrl?: string
   // UI state
   likes?: number
   comments?: number
