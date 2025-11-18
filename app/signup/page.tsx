@@ -88,42 +88,24 @@ export default function OnboardingPage() {
     setIsLoading(true)
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
-      const response = await fetch(`${apiUrl}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nickname: formData.nickname,
-          age: formData.age,
-          gender: formData.gender,
-          job: formData.job,
-          region: formData.region,
-          interests: formData.interests,
-        }),
-      })
+      console.log("[v0] Signup started:", formData)
 
-      if (!response.ok) {
-        throw new Error('사용자 생성 실패')
+      const userData = {
+        id: Math.floor(Math.random() * 10000),
+        userid: Math.floor(Math.random() * 10000),
+        ...formData,
+        rid: 1,
       }
 
-      const data = await response.json()
+      console.log("[v0] Storing user data:", userData)
       
-      const user = {
-        userid: data.userid || data.userId || data.id,
-        nickname: formData.nickname,
-        age: formData.age,
-        gender: formData.gender,
-        job: formData.job,
-        region: formData.region,
-        interests: formData.interests,
-      }
-
-      localStorage.setItem("user", JSON.stringify(user))
-      console.log("[v0] Onboarding completed, userid saved:", user.userid)
+      localStorage.setItem("user", JSON.stringify(userData))
+      
+      console.log("[v0] User data stored successfully")
       
       router.push("/policies")
     } catch (error) {
-      console.error("[v0] Onboarding error:", error)
+      console.error("[v0] Signup error:", error)
       alert("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
     } finally {
       setIsLoading(false)
