@@ -95,39 +95,41 @@ export default function NewProposalPage() {
 
       const user = JSON.parse(userStr)
       
-      if (!user.userid) {
+      if (!user.userid && !user.id) {
         alert("로그인이 필요합니다.")
         router.push("/signup")
         return
       }
 
       const proposalData = {
-        userId: user.userid,
+        id: Date.now(), // Generate unique ID using timestamp
+        eid: 1,
+        rid: 1,
+        uid: user.userid || user.id,
         title: title.trim(),
+        content: `문제 정의:\n${problem.trim()}\n\n해결 방안:\n${solution.trim()}\n\n기대 효과:\n${expectedEffect.trim()}`,
         region: selectedRegion,
-        categories: selectedCategories,
-        problemDefinition: problem.trim(),
-        solution: solution.trim(),
-        expectedEffect: expectedEffect.trim(),
+        tags: selectedCategories.map((cat, idx) => ({ id: idx + 1, name: cat })),
         relatedExampleIds: selectedExamples,
+        read_cnt: 0,
+        created_at: Date.now(),
+        updated_at: Date.now(),
       }
 
       console.log("[v0] Submitting proposal:", proposalData)
 
-      const response = await apiRequest(API_ENDPOINTS.CREATE_PROPOSAL, {
-        method: "POST",
-        body: JSON.stringify(proposalData),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log("[v0] Proposal created successfully:", result)
-        router.push("/proposals")
-      } else {
-        const error = await response.json()
-        console.error("[v0] Failed to create proposal:", error)
-        alert("정책 제안 등록에 실패했습니다.")
-      }
+      const existingProposalsStr = localStorage.getItem("proposals")
+      const existingProposals = existingProposalsStr ? JSON.parse(existingProposalsStr) : []
+      
+      const updatedProposals = [proposalData, ...existingProposals]
+      localStorage.setItem("proposals", JSON.stringify(updatedProposals))
+      
+      console.log("[v0] Proposal saved to localStorage")
+      
+      // Small delay to ensure localStorage write completes
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      router.push("/proposals")
     } catch (error) {
       console.error("[v0] Error submitting proposal:", error)
       alert("오류가 발생했습니다. 다시 시도해주세요.")

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import { Search, Heart, MessageCircle, Bookmark, ChevronDown, SlidersHorizontal, ArrowUpDown } from 'lucide-react'
 import type { Proposal, PolicyCategory } from "@/types"
@@ -55,6 +55,34 @@ export default function ProposalsPage() {
   const [selectedCategory, setSelectedCategory] = useState<PolicyCategory>("전체")
   const [proposals, setProposals] = useState(mockProposals)
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    const loadProposals = () => {
+      const savedProposalsStr = localStorage.getItem("proposals")
+      if (savedProposalsStr) {
+        const savedProposals = JSON.parse(savedProposalsStr)
+        
+        // Transform saved proposals to match display format
+        const transformedProposals = savedProposals.map((proposal: any) => ({
+          ...proposal,
+          likes: 0,
+          comments: 0,
+          isLiked: false,
+          isBookmarked: false,
+          author: {
+            nickname: "나",
+            region: proposal.region || "옥천"
+          }
+        }))
+        
+        // Combine with mock proposals
+        setProposals([...transformedProposals, ...mockProposals])
+        console.log("[v0] Loaded proposals from localStorage:", transformedProposals.length)
+      }
+    }
+    
+    loadProposals()
+  }, [])
 
   const handleLike = (proposalId: number) => {
     setProposals(prev => prev.map(p => 
