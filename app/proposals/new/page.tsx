@@ -148,7 +148,8 @@ export default function NewProposalPage() {
         console.log("[v0] Category not found in valid categories:", categoryFromUrl)
       }
     }
-  }, [searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array - run only once on mount
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
