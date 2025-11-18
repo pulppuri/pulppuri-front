@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Check, ChevronDown } from 'lucide-react'
-import { OKCHEON_REGIONS, POLICY_CATEGORIES } from "@/lib/constants"
+import { POLICY_CATEGORIES } from "@/lib/constants"
+import { apiRequest, API_ENDPOINTS } from "@/lib/api"
 
 type Step = 1 | 2 | 3 | 4
 
-// Mock AI recommended examples
 const mockAIExamples = [
   {
     id: 1,
@@ -27,6 +27,7 @@ export default function NewProposalPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Step 1: Basic Info
   const [selectedRegion, setSelectedRegion] = useState("옥천읍")
@@ -40,8 +41,6 @@ export default function NewProposalPage() {
   const [selectedExamples, setSelectedExamples] = useState<number[]>([])
   const [solution, setSolution] = useState("")
   const [expectedEffect, setExpectedEffect] = useState("")
-  
-  // Step 4: Final Summary (auto-populated from previous steps)
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -59,64 +58,109 @@ export default function NewProposalPage() {
     }
   }
 
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1:
+        return title.trim() !== "" && selectedCategories.length > 0
+      case 2:
+        return problem.trim() !== ""
+      case 3:
+        return solution.trim() !== "" && expectedEffect.trim() !== ""
+      case 4:
+        return true
+      default:
+        return false
+    }
+  }
+
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 4 && canProceed()) {
       setCurrentStep((currentStep + 1) as Step)
     }
   }
 
-  const handleSubmit = () => {
-    // TODO: Call API to submit proposal
-    console.log("[v0] Submitting proposal:", {
-      region: selectedRegion,
-      title,
-      categories: selectedCategories,
-      problem,
-      solution,
-      expectedEffect,
-      relatedExamples: selectedExamples
-    })
-    router.push("/proposals")
+  const handleSubmit = async () => {
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
+    
+    try {
+      // Get userId from localStorage (set during signup/login)
+      const userId = localStorage.getItem("userId")
+      
+      if (!userId) {
+        alert("로그인이 필요합니다.")
+        router.push("/login")
+        return
+      }
+
+      const proposalData = {
+        userId: parseInt(userId),
+        title: title.trim(),
+        region: selectedRegion,
+        categories: selectedCategories,
+        problemDefinition: problem.trim(),
+        solution: solution.trim(),
+        expectedEffect: expectedEffect.trim(),
+        relatedExampleIds: selectedExamples,
+      }
+
+      console.log("[v0] Submitting proposal:", proposalData)
+
+      const response = await apiRequest(API_ENDPOINTS.CREATE_PROPOSAL, {
+        method: "POST",
+        body: JSON.stringify(proposalData),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log("[v0] Proposal created successfully:", result)
+        router.push("/proposals")
+      } else {
+        const error = await response.json()
+        console.error("[v0] Failed to create proposal:", error)
+        alert("정책 제안 등록에 실패했습니다.")
+      }
+    } catch (error) {
+      console.error("[v0] Error submitting proposal:", error)
+      alert("오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const progressPercentage = (currentStep / 4) * 100
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category')
-    console.log("[v0] Category from URL:", categoryFromUrl)
-    console.log("[v0] Available categories:", POLICY_CATEGORIES)
     
     if (categoryFromUrl) {
-      // Check if the category exists in POLICY_CATEGORIES (excluding "전체")
       const validCategories = POLICY_CATEGORIES.filter(c => c !== "전체")
       if (validCategories.includes(categoryFromUrl)) {
-        console.log("[v0] Setting selected category:", categoryFromUrl)
         setSelectedCategories([categoryFromUrl])
-      } else {
-        console.log("[v0] Category not found in valid categories")
       }
     }
   }, [searchParams])
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-white">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background">
+      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-4">
           <button
             onClick={() => currentStep === 1 ? router.back() : setCurrentStep((currentStep - 1) as Step)}
-            className="text-foreground"
+            className="text-gray-900"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-lg font-semibold">정책 제안</h1>
+          <h1 className="text-lg font-semibold text-gray-900">정책 제안</h1>
           <div className="w-6" />
         </div>
         
         {/* Progress Bar */}
-        <div className="h-1 bg-muted">
+        <div className="h-1 bg-gray-100">
           <div
-            className="h-full bg-[#d3c1ff] transition-all duration-300"
+            className="h-full bg-[#b4a0e5] transition-all duration-300"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -128,52 +172,51 @@ export default function NewProposalPage() {
         {currentStep === 1 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d3c1ff] text-sm font-semibold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b4a0e5] text-base font-bold text-white">
                 1
               </div>
-              <h2 className="text-xl font-bold">기본 정보</h2>
+              <h2 className="text-xl font-bold text-gray-900">기본 정보</h2>
             </div>
 
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-gray-600">
               단계별로 차근차근 정책을 제안해봅니다.
               <br />
-              무선 간단한 정보부터 입력해볼까요?
+              우선 간단한 정보부터 입력해볼까요?
             </p>
 
             {/* Region Selection */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">어느 지역에 제안하시나요?</label>
+              <label className="block text-base font-semibold text-gray-900">
+                어느 지역에 제안하시나요?
+              </label>
               <div className="relative">
-                <select
+                <input
+                  type="text"
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-input bg-background px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#d3c1ff]"
-                >
-                  {OKCHEON_REGIONS.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  placeholder="옥천읍"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-[#b4a0e5] focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
+                />
               </div>
             </div>
 
             {/* Title Input */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">정책 제안 제목을 입력해주세요.</label>
+              <label className="block text-base font-semibold text-gray-900">
+                정책 제안 제목을 입력해주세요.
+              </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="예: 옥천읍에 공용 자전거를 설치해주세요"
-                className="w-full rounded-lg border border-input bg-muted/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#d3c1ff]"
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:border-[#b4a0e5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
               />
             </div>
 
             {/* Category Selection */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">
+              <label className="block text-base font-semibold text-gray-900">
                 정책 분야를 선택해주세요. (복수 선택 가능)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -181,10 +224,10 @@ export default function NewProposalPage() {
                   <button
                     key={category}
                     onClick={() => toggleCategory(category)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
                       selectedCategories.includes(category)
-                        ? "bg-[#d3c1ff] text-foreground"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-[#b4a0e5] text-gray-900"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     {category}
@@ -199,23 +242,26 @@ export default function NewProposalPage() {
         {currentStep === 2 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d3c1ff] text-sm font-semibold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b4a0e5] text-base font-bold text-white">
                 2
               </div>
-              <h2 className="text-xl font-bold">문제 정의하기</h2>
+              <h2 className="text-xl font-bold text-gray-900">문제 정의하기</h2>
             </div>
 
-            <p className="text-sm font-medium">어떤 문제를 해결하고 싶으신가요?</p>
+            <p className="text-base font-semibold text-gray-900">
+              어떤 문제를 해결하고 싶으신가요?
+            </p>
 
             <textarea
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
               placeholder="예: 옥천읍에서 다른 읍으로 다니기가 힘들어요"
-              className="min-h-[200px] w-full resize-none rounded-lg border border-input bg-muted/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#d3c1ff]"
+              className="min-h-[280px] w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-4 py-4 text-base text-gray-900 placeholder:text-gray-400 focus:border-[#b4a0e5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
             />
 
-            <p className="text-xs text-muted-foreground">
-              💡 누가, 언제, 어떤 불편함 겪는지 구체적으로 적어보세요
+            <p className="flex items-start gap-1 text-sm text-gray-500">
+              <span>💡</span>
+              <span>누가, 언제, 어떤 불편을 겪는지 구체적으로 적어보세요</span>
             </p>
           </div>
         )}
@@ -224,16 +270,16 @@ export default function NewProposalPage() {
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d3c1ff] text-sm font-semibold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b4a0e5] text-base font-bold text-white">
                 3
               </div>
-              <h2 className="text-xl font-bold">문제 해결 방안 제시</h2>
+              <h2 className="text-xl font-bold text-gray-900">문제 해결 방안 제시</h2>
             </div>
 
             {/* AI Recommended Examples */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold">AI의 추천 사례</h3>
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <h3 className="text-base font-bold text-gray-900">AI의 추천 사례</h3>
+              <p className="text-sm leading-relaxed text-gray-600">
                 비슷한 문제를 해결한 사례를 찾았어요.
                 <br />
                 아래 사례를 참고해서 우리 지역에 맞는 해결책을 만들어보세요.
@@ -244,18 +290,24 @@ export default function NewProposalPage() {
                   <button
                     key={example.id}
                     onClick={() => toggleExample(example.id)}
-                    className="relative w-full rounded-xl border border-border bg-muted/50 p-4 text-left transition-colors hover:bg-muted"
+                    className="relative w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition-all hover:border-[#b4a0e5] hover:bg-white"
                   >
-                    <div className="mb-2">
-                      <p className="text-sm font-medium leading-snug">{example.title}</p>
+                    <div className="mb-3 pr-8">
+                      <p className="text-sm font-medium leading-snug text-gray-900">
+                        {example.title}
+                      </p>
                     </div>
                     <div className="flex gap-2">
-                      <span className="rounded-full bg-background px-3 py-1 text-xs">{example.region}</span>
-                      <span className="rounded-full bg-[#d3c1ff] px-3 py-1 text-xs font-medium">{example.category}</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-900">
+                        {example.region}
+                      </span>
+                      <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
+                        {example.category}
+                      </span>
                     </div>
                     {selectedExamples.includes(example.id) && (
-                      <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#d3c1ff]">
-                        <Check className="h-4 w-4" />
+                      <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#b4a0e5]">
+                        <Check className="h-4 w-4 text-white" />
                       </div>
                     )}
                   </button>
@@ -264,34 +316,38 @@ export default function NewProposalPage() {
             </div>
 
             {/* AI Writing Guide */}
-            <div className="space-y-3 rounded-xl bg-[#d3c1ff] p-4">
-              <h3 className="text-sm font-semibold">AI 제안서 작성 가이드</h3>
-              <ul className="space-y-1 text-xs leading-relaxed">
+            <div className="space-y-3 rounded-xl bg-[#b4a0e5] p-5">
+              <h3 className="text-base font-bold text-gray-900">AI 제안서 작성 가이드</h3>
+              <ul className="space-y-1.5 text-sm leading-relaxed text-gray-900">
                 <li>• 구체적인 실천 장소를 제안해보세요</li>
-                <li>• 비슷한 사례의 예산 구모를 참고해보세요</li>
+                <li>• 비슷한 사례의 예산 규모를 참인해보세요</li>
                 <li>• 어떤 사람들이 가장 많이 이용할 것 같나요?</li>
               </ul>
             </div>
 
             {/* Solution Input */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">문제를 어떻게 해결할 수 있을까요?</label>
+              <label className="block text-base font-semibold text-gray-900">
+                문제를 어떻게 해결할 수 있을까요?
+              </label>
               <textarea
                 value={solution}
                 onChange={(e) => setSolution(e.target.value)}
-                placeholder="예:&#10;• 옥천읍의 학교 및 아파트 근처에 자전거 반납소 설치&#10;• 대전시 타슈처럼 옥천읍의 공용 자전거 열람 만들어서 관리"
-                className="min-h-[150px] w-full resize-none rounded-lg border border-input bg-muted/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#d3c1ff]"
+                placeholder="예:&#10;• 옥천읍의 학교 및 아파트 근처에 자전거 반납소 설치&#10;• 대전시 타슈처럼 옥천읍의 공용 자전거 앱을 만들어서 관리"
+                className="min-h-[180px] w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-4 py-4 text-base text-gray-900 placeholder:text-gray-400 focus:border-[#b4a0e5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
               />
             </div>
 
             {/* Expected Effect Input */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">기대되는 효과는 무엇인가요?</label>
+              <label className="block text-base font-semibold text-gray-900">
+                기대되는 효과는 무엇인가요?
+              </label>
               <textarea
                 value={expectedEffect}
                 onChange={(e) => setExpectedEffect(e.target.value)}
-                placeholder="예:&#10;• 아이들이 도로 교통 교육 가능&#10;• 버스 외의 대중교통으로 이동성 보장"
-                className="min-h-[150px] w-full resize-none rounded-lg border border-input bg-muted/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#d3c1ff]"
+                placeholder="예:&#10;• 아이들의 도로 교통 교육 가능&#10;• 버스 외의 대중교통으로 이동성 보장"
+                className="min-h-[180px] w-full resize-none rounded-xl border border-gray-300 bg-gray-50 px-4 py-4 text-base text-gray-900 placeholder:text-gray-400 focus:border-[#b4a0e5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
               />
             </div>
           </div>
@@ -299,15 +355,15 @@ export default function NewProposalPage() {
 
         {/* Step 4: Final Summary */}
         {currentStep === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-24">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d3c1ff] text-sm font-semibold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b4a0e5] text-base font-bold text-white">
                 4
               </div>
-              <h2 className="text-xl font-bold">글로 정리하기</h2>
+              <h2 className="text-xl font-bold text-gray-900">글로 정리하기</h2>
             </div>
 
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-sm leading-relaxed text-gray-600">
               지금까지 쓴 글을 하나로 정리해보세요.
               <br />
               필요하다면 AI에게 글 교정을 받을 수 있어요.
@@ -315,44 +371,50 @@ export default function NewProposalPage() {
 
             {/* Tags and Title */}
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <span className="rounded-full bg-background px-3 py-1.5 text-sm font-medium">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900">
                   {selectedRegion}
                 </span>
                 {selectedCategories.map((category) => (
                   <span
                     key={category}
-                    className="rounded-full bg-[#d3c1ff] px-3 py-1.5 text-sm font-medium"
+                    className="rounded-full bg-[#b4a0e5] px-4 py-1.5 text-sm font-medium text-gray-900"
                   >
                     {category}
                   </span>
                 ))}
               </div>
 
-              <h3 className="text-lg font-bold leading-snug">{title || "제목 없음"}</h3>
+              <h3 className="text-lg font-bold leading-snug text-gray-900">
+                {title || "옥천읍에 공용 자전거를 설치해주세요."}
+              </h3>
             </div>
 
-            {/* Summary Sections */}
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <h4 className="mb-2 text-sm font-bold">1. 문제 정의</h4>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {problem || "문제가 입력되지 않았습니다."}
+            {/* Summary Sections - wrapped in gray background */}
+            <div className="space-y-6 rounded-2xl bg-gray-50 p-5">
+              <div>
+                <h4 className="mb-3 text-base font-bold text-gray-900">1. 문제 정의</h4>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                  {problem || "옥천읍에서 다른 읍으로 다니기가 힘들어요"}
                 </p>
               </div>
 
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <h4 className="mb-3 text-sm font-bold">2. 관련 정책 사례</h4>
+              <div>
+                <h4 className="mb-3 text-base font-bold text-gray-900">2. 관련 정책 사례</h4>
                 {selectedExamples.length > 0 ? (
                   <div className="space-y-3">
                     {mockAIExamples
                       .filter(ex => selectedExamples.includes(ex.id))
                       .map((example) => (
-                        <div key={example.id} className="rounded-lg border border-border bg-background p-3">
-                          <p className="mb-2 text-sm font-medium">{example.title}</p>
+                        <div key={example.id} className="rounded-xl bg-white p-4 shadow-sm">
+                          <p className="mb-3 text-sm font-medium leading-snug text-gray-900">
+                            {example.title}
+                          </p>
                           <div className="flex gap-2">
-                            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{example.region}</span>
-                            <span className="rounded-full bg-[#d3c1ff] px-2.5 py-0.5 text-xs font-medium">
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
+                              {example.region}
+                            </span>
+                            <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
                               {example.category}
                             </span>
                           </div>
@@ -360,46 +422,64 @@ export default function NewProposalPage() {
                       ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">선택된 사례가 없습니다.</p>
+                  <div className="rounded-xl bg-white p-4 shadow-sm">
+                    <p className="mb-3 text-sm font-medium text-gray-900">
+                      대전시 공용 자전거 '타슈' 공영적 반응 세도
+                    </p>
+                    <div className="flex gap-2">
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
+                        대전
+                      </span>
+                      <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
+                        교통
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <h4 className="mb-2 text-sm font-bold">3. 해결 방안 제시</h4>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                  {solution || "해결 방안이 입력되지 않았습니다."}
+              <div>
+                <h4 className="mb-3 text-base font-bold text-gray-900">3. 해결 방안 제시</h4>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                  {solution || "대전시 타슈 사례를 보면 OO 예산으로 OO명이 이용 중이라고 합니다. 우수사례에서 보았듯이 옥천읍에도 공용 자전거를 확보 근처에 설치해주세요"}
                 </p>
               </div>
 
-              <div className="rounded-xl border border-border bg-muted/30 p-4">
-                <h4 className="mb-2 text-sm font-bold">4. 기대 효과</h4>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                  {expectedEffect || "기대 효과가 입력되지 않았습니다."}
+              <div>
+                <h4 className="mb-3 text-base font-bold text-gray-900">4. 기대 효과</h4>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                  {expectedEffect || "월신 빠르게 이동할 수 있어서 삶의 질이 높아져요"}
                 </p>
               </div>
             </div>
 
             {/* AI Correction Button (Floating) */}
-            <button className="fixed bottom-24 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#d3c1ff] shadow-lg transition-transform hover:scale-105 active:scale-95">
-              <div className="flex flex-col items-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                <span className="text-[10px] font-medium">AI 교정</span>
-              </div>
+            <button className="fixed bottom-28 right-6 z-20 flex flex-col items-center justify-center gap-1 rounded-full bg-[#b4a0e5] px-4 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-900">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <span className="text-xs font-bold text-gray-900">AI 교정</span>
             </button>
           </div>
         )}
       </div>
 
       {/* Bottom Button */}
-      <div className="sticky bottom-0 border-t border-border bg-background p-4">
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200 bg-white p-4">
         <button
           onClick={currentStep === 4 ? handleSubmit : handleNext}
-          className="w-full rounded-xl bg-[#d3c1ff] py-3.5 text-center font-semibold transition-colors hover:bg-[#c5b3f0] active:bg-[#b7a5e2]"
+          disabled={!canProceed() || (currentStep === 4 && isSubmitting)}
+          className={`w-full rounded-xl py-4 text-center text-base font-bold transition-all ${
+            canProceed() && !isSubmitting
+              ? "bg-[#b4a0e5] text-gray-900 hover:bg-[#a693d9] active:scale-98"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
         >
-          {currentStep === 4 ? "게시하기" : "다음 단계"}
+          {currentStep === 4 
+            ? (isSubmitting ? "게시 중..." : "게시하기")
+            : "다음 단계"
+          }
         </button>
       </div>
     </div>
