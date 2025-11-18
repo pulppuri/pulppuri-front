@@ -44,7 +44,6 @@ const MOCK_EXAMPLE_DETAIL: Example & {
   created_at: Date.now(),
   updated_at: Date.now(),
   tags: [
-    { id: 1, name: "행정" },
     { id: 2, name: "청년" },
   ],
   likes: 50,
@@ -187,9 +186,7 @@ export default function PolicyDetailPage() {
   }
 
   const handleProposePolicy = () => {
-    // Use the first tag as the category, but map it to the correct POLICY_CATEGORIES value
     const categoryTag = example.tags?.[0]?.name || ""
-    console.log("[v0] Navigating to proposal with category:", categoryTag)
     router.push(`/proposals/new?category=${encodeURIComponent(categoryTag)}`)
   }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Check, ChevronDown } from 'lucide-react'
-import { POLICY_CATEGORIES } from "@/lib/constants"
+import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
 import { apiRequest, API_ENDPOINTS } from "@/lib/api"
 
 type Step = 1 | 2 | 3 | 4
@@ -30,7 +30,7 @@ export default function NewProposalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Step 1: Basic Info
-  const [selectedRegion, setSelectedRegion] = useState("옥천읍")
+  const [selectedRegion, setSelectedRegion] = useState("")
   const [title, setTitle] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   
@@ -61,7 +61,7 @@ export default function NewProposalPage() {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return title.trim() !== "" && selectedCategories.length > 0
+        return title.trim() !== "" && selectedCategories.length > 0 && selectedRegion !== ""
       case 2:
         return problem.trim() !== ""
       case 3:
@@ -134,10 +134,18 @@ export default function NewProposalPage() {
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category')
     
+    console.log("[v0] Category from URL:", categoryFromUrl)
+    console.log("[v0] Available categories:", POLICY_CATEGORIES)
+    
     if (categoryFromUrl) {
       const validCategories = POLICY_CATEGORIES.filter(c => c !== "전체")
+      console.log("[v0] Valid categories:", validCategories)
+      
       if (validCategories.includes(categoryFromUrl)) {
+        console.log("[v0] Setting selected category:", categoryFromUrl)
         setSelectedCategories([categoryFromUrl])
+      } else {
+        console.log("[v0] Category not found in valid categories:", categoryFromUrl)
       }
     }
   }, [searchParams])
@@ -190,13 +198,19 @@ export default function NewProposalPage() {
                 어느 지역에 제안하시나요?
               </label>
               <div className="relative">
-                <input
-                  type="text"
+                <select
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
-                  placeholder="옥천읍"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-[#b4a0e5] focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
-                />
+                  className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3 pr-10 text-base text-gray-900 focus:border-[#b4a0e5] focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
+                >
+                  <option value="" disabled>옥천읍</option>
+                  {OKCHEON_REGIONS.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
