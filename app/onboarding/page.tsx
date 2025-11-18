@@ -85,18 +85,23 @@ export default function OnboardingPage() {
 
     console.log("[v0] Onboarding completed:", formData)
 
-    // Store user data in localStorage for now
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: Math.floor(Math.random() * 10000),
-        ...formData,
-        rid: 1, // Mock region id
-      }),
-    )
+    try {
+      // Store user data in localStorage for now
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: Math.floor(Math.random() * 10000),
+          ...formData,
+          rid: 1, // Mock region id
+        }),
+      )
 
-    // Navigate to main policy page
-    router.push("/policies")
+      // Navigate to main policy page
+      router.push("/policies")
+    } catch (error) {
+      console.error("[v0] Onboarding error:", error)
+      alert("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
+    }
   }
 
   return (

@@ -14,8 +14,8 @@ export default function SplashScreen() {
       if (userStr) {
         try {
           const user = JSON.parse(userStr)
-          if (user.userid) {
-            console.log("[v0] User found in localStorage, auto-login:", user.userid)
+          if (user.id || user.userid) {
+            console.log("[v0] User found in localStorage, auto-login:", user.id || user.userid)
             router.push("/policies")
             return
           }
