@@ -85,17 +85,24 @@ export default function NewProposalPage() {
     setIsSubmitting(true)
     
     try {
-      // Get userId from localStorage (set during signup/login)
-      const userId = localStorage.getItem("userId")
+      const userStr = localStorage.getItem("user")
       
-      if (!userId) {
+      if (!userStr) {
         alert("로그인이 필요합니다.")
-        router.push("/login")
+        router.push("/signup")
+        return
+      }
+
+      const user = JSON.parse(userStr)
+      
+      if (!user.userid) {
+        alert("로그인이 필요합니다.")
+        router.push("/signup")
         return
       }
 
       const proposalData = {
-        userId: parseInt(userId),
+        userId: user.userid,
         title: title.trim(),
         region: selectedRegion,
         categories: selectedCategories,
