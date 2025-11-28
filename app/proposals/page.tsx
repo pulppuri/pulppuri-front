@@ -139,7 +139,7 @@ export default function ProposalsPage() {
       {/* Proposals List */}
       <div className="flex-1 space-y-3 px-4 pb-20 pt-4">
         {proposals.map((proposal) => (
-          <button
+          <div
             key={proposal.id}
             onClick={() => router.push(`/proposals/${proposal.id}`)}
             className="w-full rounded-xl border-0 bg-white p-3.5 text-left shadow-sm transition-shadow hover:shadow-md"
@@ -217,7 +217,7 @@ export default function ProposalsPage() {
                 />
               </button>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
