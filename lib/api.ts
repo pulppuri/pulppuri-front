@@ -92,29 +92,32 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchO
 
 export async function fetchRegionId(regionName: string): Promise<number | null> {
   try {
-    const data = await apiFetch<{ items: Array<{ id: number; display_name: string }> }>(
+    const data = await apiFetch<Array<{ id: number; full_name: string; display_name: string }>>(
       `/regions?q=${encodeURIComponent(regionName)}&page=1`,
     )
 
-    if (!data.items || data.items.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       return null
     }
 
-    // display_name이 정확히 일치하는 항목 찾기
-    const exactMatch = data.items.find((item) => item.display_name === regionName)
+    const exactMatch = data.find((item) => item.display_name === regionName)
     if (exactMatch) {
       return exactMatch.id
     }
 
-    // 없으면 첫 번째 결과 사용
-    return data.items[0].id
+    return data[0].id
   } catch (error) {
     console.error("[v0] fetchRegionId error:", error)
     return null
   }
 }
 
-export async function createGuideline(data: { title: string; content: string }) {
+export async function createGuideline(data: {
+  title: string
+  rid: number
+  categories: string[]
+  problem: string
+}) {
   return apiFetch("/guidelines", {
     method: "POST",
     body: data,

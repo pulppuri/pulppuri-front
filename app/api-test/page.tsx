@@ -17,10 +17,13 @@ export default function ApiTestPage() {
     setIsLoading(true)
     try {
       addResult("GET /regions 요청 중...")
-      const data = await apiFetch<{ items: Array<{ id: number; display_name: string }> }>("/regions?q=옥천&page=1")
-      addResult(`성공! ${data.items?.length || 0}개 지역 조회됨`)
-      if (data.items?.[0]) {
-        addResult(`첫 번째 결과: id=${data.items[0].id}, name=${data.items[0].display_name}`)
+      const data =
+        await apiFetch<Array<{ id: number; full_name: string; display_name: string }>>("/regions?q=옥천&page=1")
+      addResult(`성공! ${Array.isArray(data) ? data.length : 0}개 지역 조회됨`)
+      if (Array.isArray(data) && data[0]) {
+        addResult(
+          `첫 번째 결과: id=${data[0].id}, display_name=${data[0].display_name}, full_name=${data[0].full_name}`,
+        )
       }
     } catch (e) {
       addResult(`실패: ${e instanceof Error ? e.message : String(e)}`)
@@ -77,8 +80,10 @@ export default function ApiTestPage() {
       }
       addResult(`POST /guidelines 요청 중... (Authorization: ${token.substring(0, 20)}...)`)
       const data = await createGuideline({
-        title: "테스트 가이드라인",
-        content: "테스트 내용입니다.",
+        title: "공용 자전거 설치",
+        rid: 1,
+        categories: ["교통", "청년"],
+        problem: "대중교통이 불편해 이동이 어렵습니다",
       })
       addResult(`성공! 응답: ${JSON.stringify(data)}`)
     } catch (e) {
