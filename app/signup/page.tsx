@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { OKCHEON_REGIONS, GENDER_OPTIONS, JOB_CATEGORIES } from "@/lib/constants"
 import { ArrowLeft } from "lucide-react"
 import Image from "next/image"
+import { apiFetch, fetchRegionId } from "@/lib/api"
 
 interface OnboardingData {
   nickname: string
@@ -88,35 +89,28 @@ export default function OnboardingPage() {
     setIsLoading(true)
 
     try {
-      let data
-      const externalApiUrl = process.env.NEXT_PUBLIC_API_URL
+      let token: string | null = null
 
-      if (externalApiUrl) {
-        // Try external backend first
-        try {
-          const response = await fetch(`${externalApiUrl}/users`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              nickname: formData.nickname,
-              age: formData.age,
-              gender: formData.gender,
-              job: formData.job,
-              region: formData.region,
-              interests: formData.interests,
-            }),
-          })
+      const rid = await fetchRegionId(formData.region)
 
-          if (response.ok) {
-            data = await response.json()
-          }
-        } catch (e) {
-          console.log("[v0] External API not available, using local mock API")
-        }
+      try {
+        const data = await apiFetch<{ token: string }>("/users", {
+          method: "POST",
+          body: {
+            nickname: formData.nickname,
+            age: formData.age,
+            gender: formData.gender,
+            job: formData.job,
+            rid: rid || 1,
+          },
+        })
+        token = data.token
+        console.log("[v0] External API success, token received")
+      } catch (e) {
+        console.log("[v0] External API not available, using local mock API")
       }
 
-      // Fallback to local mock API route
-      if (!data) {
+      if (!token) {
         const response = await fetch("/api/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -134,11 +128,13 @@ export default function OnboardingPage() {
           throw new Error("사용자 생성 실패")
         }
 
-        data = await response.json()
+        const data = await response.json()
+        token = data.userid || `mock_${Date.now()}`
       }
 
+      localStorage.setItem("access_token", token)
+
       const user = {
-        userid: data.userid || data.userId || data.id,
         nickname: formData.nickname,
         age: formData.age,
         gender: formData.gender,
@@ -146,10 +142,9 @@ export default function OnboardingPage() {
         region: formData.region,
         interests: formData.interests,
       }
-
       localStorage.setItem("user", JSON.stringify(user))
-      console.log("[v0] Onboarding completed, userid saved:", user.userid)
 
+      console.log("[v0] Onboarding completed, access_token saved")
       router.push("/policies")
     } catch (error) {
       console.error("[v0] Onboarding error:", error)

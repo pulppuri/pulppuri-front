@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from 'next/navigation'
-import { Search, Heart, MessageCircle, Bookmark, ChevronDown, SlidersHorizontal, ArrowUpDown } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import { Search, Heart, MessageCircle, Bookmark, ChevronDown, SlidersHorizontal, ArrowUpDown } from "lucide-react"
 import type { Proposal, PolicyCategory } from "@/types"
 import { BottomNav } from "@/components/bottom-nav"
 import { POLICY_CATEGORIES } from "@/lib/constants"
 
-const mockProposals: (Proposal & { 
+const mockProposals: (Proposal & {
   likes: number
   comments: number
   isLiked: boolean
@@ -24,12 +24,15 @@ const mockProposals: (Proposal & {
     read_cnt: 160,
     created_at: Date.now() - 3 * 24 * 60 * 60 * 1000,
     updated_at: Date.now() - 3 * 24 * 60 * 60 * 1000,
-    tags: [{ id: 1, name: "교통" }, { id: 2, name: "교육" }],
+    tags: [
+      { id: 1, name: "교통" },
+      { id: 2, name: "교육" },
+    ],
     likes: 160,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
-    author: { nickname: "옥천시민", region: "안내면" }
+    author: { nickname: "옥천시민", region: "안내면" },
   },
   {
     id: 2,
@@ -41,13 +44,16 @@ const mockProposals: (Proposal & {
     read_cnt: 160,
     created_at: Date.now() - 3 * 24 * 60 * 60 * 1000,
     updated_at: Date.now() - 3 * 24 * 60 * 60 * 1000,
-    tags: [{ id: 1, name: "교통" }, { id: 2, name: "교육" }],
+    tags: [
+      { id: 1, name: "교통" },
+      { id: 2, name: "교육" },
+    ],
     likes: 160,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
-    author: { nickname: "옥천시민", region: "안내면" }
-  }
+    author: { nickname: "옥천시민", region: "안내면" },
+  },
 ]
 
 export default function ProposalsPage() {
@@ -57,20 +63,16 @@ export default function ProposalsPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleLike = (proposalId: number) => {
-    setProposals(prev => prev.map(p => 
-      p.id === proposalId 
-        ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-        : p
-    ))
+    setProposals((prev) =>
+      prev.map((p) =>
+        p.id === proposalId ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p,
+      ),
+    )
     // TODO: Call API to update like status
   }
 
   const handleBookmark = (proposalId: number) => {
-    setProposals(prev => prev.map(p => 
-      p.id === proposalId 
-        ? { ...p, isBookmarked: !p.isBookmarked }
-        : p
-    ))
+    setProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, isBookmarked: !p.isBookmarked } : p)))
     // TODO: Call API to update bookmark status
   }
 
@@ -141,35 +143,33 @@ export default function ProposalsPage() {
         {proposals.map((proposal) => (
           <div
             key={proposal.id}
+            role="button"
+            tabIndex={0}
             onClick={() => router.push(`/proposals/${proposal.id}`)}
-            className="w-full rounded-xl border-0 bg-white p-3.5 text-left shadow-sm transition-shadow hover:shadow-md"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                router.push(`/proposals/${proposal.id}`)
+              }
+            }}
+            className="w-full rounded-xl border-0 bg-white p-3.5 text-left shadow-sm transition-shadow hover:shadow-md cursor-pointer"
           >
             {/* Tags and Date */}
             <div className="mb-2.5 flex items-center justify-between">
               <div className="flex gap-1.5">
                 {proposal.tags?.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="rounded bg-[#b69df8] px-2.5 py-0.5 text-xs font-medium text-white"
-                  >
+                  <span key={tag.id} className="rounded bg-[#b69df8] px-2.5 py-0.5 text-xs font-medium text-white">
                     {tag.name}
                   </span>
                 ))}
               </div>
-              <span className="text-xs text-[#929292]">
-                {getRelativeTime(proposal.created_at)}
-              </span>
+              <span className="text-xs text-[#929292]">{getRelativeTime(proposal.created_at)}</span>
             </div>
 
             {/* Title */}
-            <h3 className="mb-2 text-[14px] font-semibold leading-snug text-black">
-              {proposal.title}
-            </h3>
+            <h3 className="mb-2 text-[14px] font-semibold leading-snug text-black">{proposal.title}</h3>
 
             {/* Content */}
-            <p className="mb-3 text-[13px] leading-relaxed text-[#666666]">
-              {proposal.content}
-            </p>
+            <p className="mb-3 text-[13px] leading-relaxed text-[#666666]">{proposal.content}</p>
 
             {/* Author Info */}
             <div className="mb-3 flex items-center gap-2.5">
@@ -192,9 +192,7 @@ export default function ProposalsPage() {
                   }}
                   className="flex items-center gap-1 text-[13px] text-[#929292] transition-colors hover:text-[#b69df8]"
                 >
-                  <Heart
-                    className={`h-[17px] w-[17px] ${proposal.isLiked ? "fill-[#b69df8] text-[#b69df8]" : ""}`}
-                  />
+                  <Heart className={`h-[17px] w-[17px] ${proposal.isLiked ? "fill-[#b69df8] text-[#b69df8]" : ""}`} />
                   <span>동의해요 {proposal.likes}</span>
                 </button>
                 <button

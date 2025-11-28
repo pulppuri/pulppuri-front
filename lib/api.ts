@@ -1,12 +1,8 @@
-// API configuration for future backend integration
-// TODO: 백엔드 서버 준비되면 실제 IP와 포트로 교체하세요
+// API configuration for backend integration
+// 로컬 FastAPI 백엔드: http://localhost:8000
 
 export const API_CONFIG = {
-  // Development
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
-
-  // Production - 나중에 실제 서버 주소로 변경
-  // BASE_URL: 'https://your-server-domain.com:port/api',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
 }
 
 // API endpoints matching backend DB structure
@@ -24,7 +20,7 @@ export const API_ENDPOINTS = {
   GET_EXAMPLES: "/examples",
   GET_EXAMPLE_BY_ID: "/examples/:id",
   CREATE_EXAMPLE: "/examples",
-  UPDATE_EXAMPLE: "/examples/:id", // Added update and delete endpoints
+  UPDATE_EXAMPLE: "/examples/:id",
   DELETE_EXAMPLE: "/examples/:id",
   LIKE_EXAMPLE: "/examples/:id/like",
   BOOKMARK_EXAMPLE: "/examples/:id/bookmark",
@@ -40,12 +36,93 @@ export const API_ENDPOINTS = {
   GET_PROPOSAL_COMMENTS: "/proposals/:id/comments",
   CREATE_PROPOSAL_COMMENT: "/proposals/:id/comments",
 
+  // Guidelines
+  CREATE_GUIDELINE: "/guidelines",
+
   // Tags
   GET_TAGS: "/tags",
   GET_TAGS_BY_CATEGORY: "/tags/:category",
 }
 
-// API helper functions
+interface ApiFetchOptions extends Omit<RequestInit, "body"> {
+  body?: unknown
+  auth?: boolean // 인증 필요 여부 (기본: false)
+}
+
+export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { body, auth = false, headers: customHeaders, ...restOptions } = options
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...customHeaders,
+  }
+
+  if (auth) {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+    if (token) {
+      headers["Authorization"] = token
+    }
+  }
+
+  const fetchOptions: RequestInit = {
+    ...restOptions,
+    headers,
+  }
+
+  if (body) {
+    fetchOptions.body = JSON.stringify(body)
+  }
+
+  const response = await fetch(url, fetchOptions)
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`API Error ${response.status}: ${errorText}`)
+  }
+
+  // 204 No Content 등 빈 응답 처리
+  const contentType = response.headers.get("content-type")
+  if (contentType && contentType.includes("application/json")) {
+    return response.json()
+  }
+
+  return null as T
+}
+
+export async function fetchRegionId(regionName: string): Promise<number | null> {
+  try {
+    const data = await apiFetch<{ items: Array<{ id: number; display_name: string }> }>(
+      `/regions?q=${encodeURIComponent(regionName)}&page=1`,
+    )
+
+    if (!data.items || data.items.length === 0) {
+      return null
+    }
+
+    // display_name이 정확히 일치하는 항목 찾기
+    const exactMatch = data.items.find((item) => item.display_name === regionName)
+    if (exactMatch) {
+      return exactMatch.id
+    }
+
+    // 없으면 첫 번째 결과 사용
+    return data.items[0].id
+  } catch (error) {
+    console.error("[v0] fetchRegionId error:", error)
+    return null
+  }
+}
+
+export async function createGuideline(data: { title: string; content: string }) {
+  return apiFetch("/guidelines", {
+    method: "POST",
+    body: data,
+    auth: true,
+  })
+}
+
+// 기존 apiRequest 유지 (하위 호환성)
 export async function apiRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
 
