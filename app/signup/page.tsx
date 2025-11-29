@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { OKCHEON_REGIONS, GENDER_OPTIONS, JOB_CATEGORIES } from "@/lib/constants"
 import { ArrowLeft } from "lucide-react"
 import Image from "next/image"
-import { apiFetch, fetchRegionId } from "@/lib/api"
+import { apiFetch, API_ENDPOINTS, fetchRegionId } from "@/lib/api"
 
 interface OnboardingData {
   nickname: string
@@ -23,7 +23,7 @@ interface OnboardingData {
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<OnboardingData>({
     nickname: "",
     age: 0,
@@ -86,73 +86,50 @@ export default function OnboardingPage() {
   }
 
   const handleSubmit = async () => {
-    setIsLoading(true)
+    if (isSubmitting) return
+    setIsSubmitting(true)
 
     try {
-      let token: string | null = null
-
+      // Step 1: Get region ID from backend
       const rid = await fetchRegionId(formData.region)
-
-      try {
-        const data = await apiFetch<{ token: string }>("/users", {
-          method: "POST",
-          body: {
-            nickname: formData.nickname,
-            age: formData.age,
-            gender: formData.gender,
-            job: formData.job,
-            rid: rid || 1,
-          },
-        })
-        token = data.token
-        console.log("[v0] External API success, token received")
-      } catch (e) {
-        console.log("[v0] External API not available, using local mock API")
+      if (rid === null) {
+        alert("지역 정보를 찾을 수 없어요. 다른 지역을 선택해 주세요.")
+        return
       }
+
+      // Step 2: Create user via backend API
+      const { token } = await apiFetch<{ token: string }>(API_ENDPOINTS.CREATE_USER, {
+        method: "POST",
+        body: {
+          nickname: formData.nickname,
+          age: formData.age,
+          gender: formData.gender,
+          job: formData.job,
+          rid,
+        },
+      })
 
       if (!token) {
-        const response = await fetch("/api/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nickname: formData.nickname,
-            age: formData.age,
-            gender: formData.gender,
-            job: formData.job,
-            region: formData.region,
-            interests: formData.interests,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("사용자 생성 실패")
-        }
-
-        const data = await response.json()
-        token = data.userid || `mock_${Date.now()}`
+        throw new Error("TOKEN_MISSING")
       }
 
-      if (token) {
-        localStorage.setItem("access_token", token)
-      }
+      // Step 3: Save token and user data to localStorage
+      localStorage.setItem("access_token", token)
+      localStorage.setItem("user", JSON.stringify({ ...formData, rid }))
 
-      const user = {
-        nickname: formData.nickname,
-        age: formData.age,
-        gender: formData.gender,
-        job: formData.job,
-        region: formData.region,
-        interests: formData.interests,
-      }
-      localStorage.setItem("user", JSON.stringify(user))
-
-      console.log("[v0] Onboarding completed, access_token saved")
+      // Step 4: Navigate to main page
       router.push("/policies")
-    } catch (error) {
-      console.error("[v0] Onboarding error:", error)
-      alert("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
+    } catch (err) {
+      console.error("[signup] submit error:", err)
+
+      const msg =
+        err instanceof Error && err.message.includes("API Error")
+          ? "서버와 통신 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요."
+          : "회원가입에 실패했어요. 네트워크 상태를 확인하고 다시 시도해 주세요."
+
+      alert(msg)
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
@@ -325,10 +302,10 @@ export default function OnboardingPage() {
         {/* Bottom Button */}
         <Button
           onClick={handleNext}
-          disabled={isLoading}
+          disabled={isSubmitting}
           className="h-14 w-full bg-primary text-lg font-semibold hover:bg-primary/90"
         >
-          {isLoading ? "처리 중..." : step === 6 ? "시작하기" : "다음"}
+          {isSubmitting ? "처리 중..." : step === 6 ? "시작하기" : "다음"}
         </Button>
       </div>
     </div>
