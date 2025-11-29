@@ -1,28 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChevronLeft, Check, ChevronDown } from "lucide-react"
+import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
-import { apiRequest, API_ENDPOINTS_NOT_IMPLEMENTED } from "@/lib/api"
-import type { PolicyCategory } from "@/types"
+import { fetchRegionId, createGuideline } from "@/lib/api"
+import type { PolicyCategory, GuidelinesResponse, ExampleSummary } from "@/types"
 
 type Step = 1 | 2 | 3 | 4
-
-const mockAIExamples = [
-  {
-    id: 1,
-    title: "대전시 공용 자전거 '타슈' 공영적 반응 세도",
-    region: "대전",
-    category: "교통",
-  },
-  {
-    id: 2,
-    title: "대전시 공용 자전거 '타슈' 공영적 반응 세도",
-    region: "대전",
-    category: "교통",
-  },
-]
 
 export default function NewProposalPage() {
   const router = useRouter()
@@ -42,6 +27,12 @@ export default function NewProposalPage() {
   const [selectedExamples, setSelectedExamples] = useState<number[]>([])
   const [solution, setSolution] = useState("")
   const [expectedEffect, setExpectedEffect] = useState("")
+
+  const [guidelinesData, setGuidelinesData] = useState<GuidelinesResponse | null>(null)
+  const [isGuidelinesLoading, setIsGuidelinesLoading] = useState(false)
+  const [guidelinesError, setGuidelinesError] = useState<string | null>(null)
+  const [resolvedRid, setResolvedRid] = useState<number | null>(null)
+  const lastGuidelineKeyRef = useRef<string | null>(null)
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -66,7 +57,7 @@ export default function NewProposalPage() {
       case 2:
         return problem.trim() !== ""
       case 3:
-        return solution.trim() !== "" && expectedEffect.trim() !== ""
+        return solution.trim() !== "" && expectedEffect.trim() !== "" && !isGuidelinesLoading && !guidelinesError
       case 4:
         return true
       default:
@@ -80,55 +71,109 @@ export default function NewProposalPage() {
     }
   }
 
+  const fetchGuidelines = async (forceRetry = false) => {
+    // 인증 체크
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      router.replace("/signup")
+      return
+    }
+
+    // 입력값 검증
+    if (!selectedRegion) {
+      setGuidelinesError("지역을 선택해 주세요.")
+      return
+    }
+    if (!title.trim()) {
+      setGuidelinesError("제목을 입력해 주세요.")
+      return
+    }
+    if (selectedCategories.length === 0) {
+      setGuidelinesError("정책 분야를 선택해 주세요.")
+      return
+    }
+    if (!problem.trim()) {
+      setGuidelinesError("문제를 입력해 주세요.")
+      return
+    }
+
+    // 중복 호출 방지
+    const guidelineKey = JSON.stringify({
+      selectedRegion,
+      title: title.trim(),
+      selectedCategories,
+      problem: problem.trim(),
+    })
+
+    if (!forceRetry && lastGuidelineKeyRef.current === guidelineKey && guidelinesData) {
+      return
+    }
+
+    setIsGuidelinesLoading(true)
+    setGuidelinesError(null)
+
+    try {
+      // 1. 지역 ID 조회
+      const rid = await fetchRegionId(selectedRegion)
+      if (rid === null) {
+        setGuidelinesError("지역 정보를 찾을 수 없어요. 다른 지역을 선택해 주세요.")
+        setIsGuidelinesLoading(false)
+        return
+      }
+      setResolvedRid(rid)
+
+      // 2. 가이드라인 생성 요청
+      const response = await createGuideline({
+        title: title.trim(),
+        rid,
+        categories: selectedCategories,
+        problem: problem.trim(),
+      })
+
+      setGuidelinesData(response)
+      lastGuidelineKeyRef.current = guidelineKey
+      setSelectedExamples([]) // 새 가이드라인이면 선택 초기화
+    } catch (error) {
+      console.error("[v0] Guidelines fetch error:", error)
+      setGuidelinesError("가이드를 불러오지 못했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.")
+    } finally {
+      setIsGuidelinesLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (currentStep === 3) {
+      fetchGuidelines()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep])
+
   const handleSubmit = async () => {
     if (isSubmitting) return
+
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      router.push("/signup")
+      return
+    }
 
     setIsSubmitting(true)
 
     try {
-      const userStr = localStorage.getItem("user")
-
-      if (!userStr) {
-        alert("로그인이 필요합니다.")
-        router.push("/signup")
-        return
-      }
-
-      const user = JSON.parse(userStr)
-
-      if (!user.userid) {
-        alert("로그인이 필요합니다.")
-        router.push("/signup")
-        return
-      }
-
-      const proposalData = {
-        userId: user.userid,
+      const payload = {
+        rid: resolvedRid,
         title: title.trim(),
-        region: selectedRegion,
         categories: selectedCategories,
-        problemDefinition: problem.trim(),
+        problem: problem.trim(),
         solution: solution.trim(),
         expectedEffect: expectedEffect.trim(),
-        relatedExampleIds: selectedExamples,
+        selectedExampleIds: selectedExamples,
+        guidelineKey: lastGuidelineKeyRef.current,
       }
 
-      console.log("[v0] Submitting proposal:", proposalData)
-
-      const response = await apiRequest(API_ENDPOINTS_NOT_IMPLEMENTED.CREATE_PROPOSAL, {
-        method: "POST",
-        body: JSON.stringify(proposalData),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log("[v0] Proposal created successfully:", result)
-        router.push("/proposals")
-      } else {
-        const error = await response.json()
-        console.error("[v0] Failed to create proposal:", error)
-        alert("정책 제안 등록에 실패했습니다.")
-      }
+      console.log("[v0] Proposal payload (API 미구현):", payload)
+      alert("제안 등록 기능은 현재 준비 중입니다.")
+      router.push("/proposals")
     } catch (error) {
       console.error("[v0] Error submitting proposal:", error)
       alert("오류가 발생했습니다. 다시 시도해주세요.")
@@ -152,7 +197,18 @@ export default function NewProposalPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty dependency array - run only once on mount
+  }, [])
+
+  const getGuideList = (): string[] => {
+    if (!guidelinesData?.guidelines) return []
+    const { guide_1, guide_2, guide_3, guide_4 } = guidelinesData.guidelines
+    return [guide_1, guide_2, guide_3, guide_4].filter((g) => g && g.trim() !== "")
+  }
+
+  const getSelectedExamplesList = (): ExampleSummary[] => {
+    if (!guidelinesData?.examples) return []
+    return guidelinesData.examples.filter((ex) => selectedExamples.includes(ex.id))
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -206,7 +262,7 @@ export default function NewProposalPage() {
                   className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3 pr-10 text-base text-gray-900 focus:border-[#b4a0e5] focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
                 >
                   <option value="" disabled>
-                    옥천읍
+                    지역 선택
                   </option>
                   {OKCHEON_REGIONS.map((region) => (
                     <option key={region} value={region}>
@@ -290,52 +346,88 @@ export default function NewProposalPage() {
               <h2 className="text-xl font-bold text-gray-900">문제 해결 방안 제시</h2>
             </div>
 
-            {/* AI Recommended Examples */}
-            <div className="space-y-3">
-              <h3 className="text-base font-bold text-gray-900">AI의 추천 사례</h3>
-              <p className="text-sm leading-relaxed text-gray-600">
-                비슷한 문제를 해결한 사례를 찾았어요.
-                <br />
-                아래 사례를 참고해서 우리 지역에 맞는 해결책을 만들어보세요.
-              </p>
-
-              <div className="space-y-3">
-                {mockAIExamples.map((example) => (
-                  <button
-                    key={example.id}
-                    onClick={() => toggleExample(example.id)}
-                    className="relative w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition-all hover:border-[#b4a0e5] hover:bg-white"
-                  >
-                    <div className="mb-3 pr-8">
-                      <p className="text-sm font-medium leading-snug text-gray-900">{example.title}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-900">
-                        {example.region}
-                      </span>
-                      <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
-                        {example.category}
-                      </span>
-                    </div>
-                    {selectedExamples.includes(example.id) && (
-                      <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#b4a0e5]">
-                        <Check className="h-4 w-4 text-white" />
-                      </div>
-                    )}
-                  </button>
-                ))}
+            {isGuidelinesLoading && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <Loader2 className="h-10 w-10 animate-spin text-[#b4a0e5]" />
+                <p className="text-sm text-gray-500">가이드를 불러오는 중...</p>
               </div>
-            </div>
+            )}
 
-            {/* AI Writing Guide */}
-            <div className="space-y-3 rounded-xl bg-[#b4a0e5] p-5">
-              <h3 className="text-base font-bold text-gray-900">AI 제안서 작성 가이드</h3>
-              <ul className="space-y-1.5 text-sm leading-relaxed text-gray-900">
-                <li>• 구체적인 실천 장소를 제안해보세요</li>
-                <li>• 비슷한 사례의 예산 규모를 참인해보세요</li>
-                <li>• 어떤 사람들이 가장 많이 이용할 것 같나요?</li>
-              </ul>
-            </div>
+            {guidelinesError && !isGuidelinesLoading && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3">
+                <p className="text-sm text-red-700">{guidelinesError}</p>
+                <button
+                  onClick={() => fetchGuidelines(true)}
+                  className="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 transition-colors"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {!isGuidelinesLoading && !guidelinesError && guidelinesData && (
+              <>
+                {/* AI Recommended Examples */}
+                <div className="space-y-3">
+                  <h3 className="text-base font-bold text-gray-900">AI의 추천 사례</h3>
+                  <p className="text-sm leading-relaxed text-gray-600">
+                    비슷한 문제를 해결한 사례를 찾았어요.
+                    <br />
+                    아래 사례를 참고해서 우리 지역에 맞는 해결책을 만들어보세요.
+                  </p>
+
+                  <div className="space-y-3">
+                    {guidelinesData.examples.map((example) => (
+                      <button
+                        key={example.id}
+                        onClick={() => toggleExample(example.id)}
+                        className="relative w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition-all hover:border-[#b4a0e5] hover:bg-white"
+                      >
+                        <div className="mb-3 pr-8">
+                          <p className="text-sm font-medium leading-snug text-gray-900">{example.title}</p>
+                          {example.sim !== undefined && (
+                            <p className="mt-1 text-xs text-gray-400">유사도: {(example.sim * 100).toFixed(0)}%</p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-900">
+                            {example.region}
+                          </span>
+                          {example.categories.slice(0, 2).map((cat) => (
+                            <span
+                              key={cat}
+                              className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900"
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                        {selectedExamples.includes(example.id) && (
+                          <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#b4a0e5]">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                    {guidelinesData.examples.length === 0 && (
+                      <p className="text-sm text-gray-500 py-4 text-center">추천 사례가 없습니다.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* AI Writing Guide */}
+                <div className="space-y-3 rounded-xl bg-[#b4a0e5] p-5">
+                  <h3 className="text-base font-bold text-gray-900">AI 제안서 작성 가이드</h3>
+                  <ul className="space-y-1.5 text-sm leading-relaxed text-gray-900">
+                    {getGuideList().map((guide, idx) => (
+                      <li key={idx}>• {guide}</li>
+                    ))}
+                    {getGuideList().length === 0 && <li>• 가이드 정보가 없습니다.</li>}
+                  </ul>
+                </div>
+              </>
+            )}
 
             {/* Solution Input */}
             <div className="space-y-3">
@@ -409,51 +501,56 @@ export default function NewProposalPage() {
 
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">2. 관련 정책 사례</h4>
-                {selectedExamples.length > 0 ? (
+                {getSelectedExamplesList().length > 0 ? (
                   <div className="space-y-3">
-                    {mockAIExamples
-                      .filter((ex) => selectedExamples.includes(ex.id))
-                      .map((example) => (
-                        <div key={example.id} className="rounded-xl bg-white p-4 shadow-sm">
-                          <p className="mb-3 text-sm font-medium leading-snug text-gray-900">{example.title}</p>
-                          <div className="flex gap-2">
-                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
-                              {example.region}
+                    {getSelectedExamplesList().map((example) => (
+                      <div key={example.id} className="rounded-xl bg-white p-4 shadow-sm">
+                        <p className="mb-3 text-sm font-medium leading-snug text-gray-900">{example.title}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
+                            {example.region}
+                          </span>
+                          {example.categories.slice(0, 2).map((cat) => (
+                            <span
+                              key={cat}
+                              className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900"
+                            >
+                              {cat}
                             </span>
-                            <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
-                              {example.category}
-                            </span>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-white p-4 shadow-sm">
-                    <p className="mb-3 text-sm font-medium text-gray-900">대전시 공용 자전거 '타슈' 공영적 반응 세도</p>
-                    <div className="flex gap-2">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">대전</span>
-                      <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
-                        교통
-                      </span>
-                    </div>
-                  </div>
+                  <p className="text-sm text-gray-500">선택된 사례가 없습니다.</p>
                 )}
               </div>
 
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">3. 해결 방안 제시</h4>
                 <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {solution ||
-                    "대전시 타슈 사례를 보면 OO 예산으로 OO명이 이용 중이라고 합니다. 우수사례에서 보았듯이 옥천읍에도 공용 자전거를 확보 근처에 설치해주세요"}
+                  {solution || "해결 방안을 입력해주세요."}
                 </p>
               </div>
 
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">4. 기대 효과</h4>
                 <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {expectedEffect || "월신 빠르게 이동할 수 있어서 삶의 질이 높아져요"}
+                  {expectedEffect || "기대 효과를 입력해주세요."}
                 </p>
               </div>
+
+              {getGuideList().length > 0 && (
+                <div>
+                  <h4 className="mb-3 text-base font-bold text-gray-900">📌 AI 작성 가이드</h4>
+                  <ul className="space-y-1 text-sm text-gray-600">
+                    {getGuideList().map((guide, idx) => (
+                      <li key={idx}>• {guide}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* AI Correction Button (Floating) */}
