@@ -1,50 +1,50 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import { ChevronLeft } from "lucide-react"
+import { requireAuth, getStoredUser } from "@/lib/auth"
 
 export default function EditProfilePage() {
   const router = useRouter()
-  
-  // Mock user data - TODO: Load from localStorage/backend
+
   const [formData, setFormData] = useState({
     nickname: "옥천옥천",
     region: "옥천읍",
-    interests: ["청년", "주거"]
+    interests: ["청년", "주거"],
   })
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user")
+    if (!requireAuth(router)) return
+
+    const storedUser = getStoredUser()
     if (storedUser) {
-      const userData = JSON.parse(storedUser)
       setFormData({
-        nickname: userData.nickname || "옥천옥천",
-        region: userData.region || "옥천읍",
-        interests: userData.interests || ["청년", "주거"],
+        nickname: (storedUser.nickname as string) || "옥천옥천",
+        region: (storedUser.region as string) || "옥천읍",
+        interests: (storedUser.interests as string[]) || ["청년", "주거"],
       })
     }
-  }, [])
+  }, [router])
 
   const regions = ["옥천읍", "동이면", "안남면", "안내면", "청성면", "청산면", "이원면"]
   const interestOptions = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
   const handleInterestToggle = (interest: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
     }))
   }
 
   const handleSave = () => {
-    const storedUser = localStorage.getItem("user")
+    const storedUser = getStoredUser()
     if (storedUser) {
-      const userData = JSON.parse(storedUser)
       const updatedUser = {
-        ...userData,
-        ...formData
+        ...storedUser,
+        ...formData,
       }
       localStorage.setItem("user", JSON.stringify(updatedUser))
     }
@@ -75,7 +75,7 @@ export default function EditProfilePage() {
           <input
             type="text"
             value={formData.nickname}
-            onChange={(e) => setFormData(prev => ({ ...prev, nickname: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, nickname: e.target.value }))}
             className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm"
             placeholder="닉네임을 입력하세요"
           />
@@ -86,7 +86,7 @@ export default function EditProfilePage() {
           <label className="mb-2 block text-sm font-semibold">거주 지역</label>
           <select
             value={formData.region}
-            onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
+            onChange={(e) => setFormData((prev) => ({ ...prev, region: e.target.value }))}
             className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm"
           >
             {regions.map((region) => (

@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Heart, MessageCircle, Bookmark, ChevronDown, SlidersHorizontal, ArrowUpDown } from "lucide-react"
 import type { Proposal, PolicyCategory } from "@/types"
 import { BottomNav } from "@/components/bottom-nav"
 import { POLICY_CATEGORIES } from "@/lib/constants"
+import { requireAuth } from "@/lib/auth"
 
 const mockProposals: (Proposal & {
   likes: number
@@ -61,6 +62,10 @@ export default function ProposalsPage() {
   const [selectedCategory, setSelectedCategory] = useState<PolicyCategory>("전체")
   const [proposals, setProposals] = useState(mockProposals)
   const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    requireAuth(router)
+  }, [router])
 
   const handleLike = (proposalId: number) => {
     setProposals((prev) =>

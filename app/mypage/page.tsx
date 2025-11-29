@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
-import { ChevronLeft, Bell, Shield, HelpCircle, LogOut, MessageCircle, Heart } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import { Bell, Shield, HelpCircle, LogOut, MessageCircle, Heart } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { requireAuth, logout, getStoredUser } from "@/lib/auth"
 
 export default function MyPage() {
   const router = useRouter()
@@ -15,21 +16,22 @@ export default function MyPage() {
     interests: ["청년", "주거"],
     proposalCount: 3,
     commentCount: 12,
-    likeCount: 47
+    likeCount: 47,
   })
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user")
+    if (!requireAuth(router)) return
+
+    const storedUser = getStoredUser()
     if (storedUser) {
-      const userData = JSON.parse(storedUser)
-      setUser(prev => ({
+      setUser((prev) => ({
         ...prev,
-        nickname: userData.nickname || prev.nickname,
-        region: userData.region || prev.region,
-        interests: userData.interests || prev.interests,
+        nickname: (storedUser.nickname as string) || prev.nickname,
+        region: (storedUser.region as string) || prev.region,
+        interests: (storedUser.interests as string[]) || prev.interests,
       }))
     }
-  }, [])
+  }, [router])
 
   // Mock posts data - TODO: Fetch from backend
   const myPosts = [
@@ -39,7 +41,7 @@ export default function MyPage() {
       category: "교육",
       preview: "어린이와 청년을 위한 도서관을...",
       agreeCount: 100,
-      commentCount: 50
+      commentCount: 50,
     },
     {
       id: 2,
@@ -47,8 +49,8 @@ export default function MyPage() {
       category: "교육",
       preview: "어린이와 청소년을 위한 도...",
       agreeCount: 100,
-      commentCount: 50
-    }
+      commentCount: 50,
+    },
   ]
 
   // Mock participated proposals - TODO: Fetch from backend
@@ -56,19 +58,17 @@ export default function MyPage() {
     {
       id: 3,
       title: "마을공동도서관 건립 요청",
-      category: "교육"
+      category: "교육",
     },
     {
       id: 4,
       title: "마을공동도서관 건립",
-      category: "교육"
-    }
+      category: "교육",
+    },
   ]
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    console.log("[v0] User logged out, redirecting to onboarding")
-    router.push("/signup")
+    logout(router)
   }
 
   return (
@@ -86,24 +86,19 @@ export default function MyPage() {
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2">
                 <h2 className="text-lg font-bold">{user.nickname}</h2>
-                <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
-                  {user.region}
-                </span>
+                <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{user.region}</span>
               </div>
               <div className="mb-4">
                 <p className="mb-2 text-sm font-semibold text-foreground">관심 분야</p>
                 <div className="flex gap-2">
                   {user.interests.map((interest) => (
-                    <span
-                      key={interest}
-                      className="rounded-full bg-muted px-3 py-1 text-sm text-foreground"
-                    >
+                    <span key={interest} className="rounded-full bg-muted px-3 py-1 text-sm text-foreground">
                       {interest}
                     </span>
                   ))}
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => router.push("/mypage/edit")}
                 className="w-full rounded-lg bg-muted py-2 text-sm font-medium transition-colors hover:bg-muted/80"
               >

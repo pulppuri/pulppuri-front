@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
 import { fetchRegionId, createGuideline } from "@/lib/api"
+import { requireAuth } from "@/lib/auth"
 import type { PolicyCategory, GuidelinesResponse, ExampleSummary } from "@/types"
 
 type Step = 1 | 2 | 3 | 4
@@ -34,6 +35,10 @@ export default function NewProposalPage() {
   const [resolvedRid, setResolvedRid] = useState<number | null>(null)
   const lastGuidelineKeyRef = useRef<string | null>(null)
 
+  useEffect(() => {
+    requireAuth(router)
+  }, [router])
+
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
       setSelectedCategories((prev) => prev.filter((c) => c !== category))
@@ -57,7 +62,13 @@ export default function NewProposalPage() {
       case 2:
         return problem.trim() !== ""
       case 3:
-        return solution.trim() !== "" && expectedEffect.trim() !== "" && !isGuidelinesLoading && !guidelinesError
+        return (
+          !!guidelinesData &&
+          !isGuidelinesLoading &&
+          !guidelinesError &&
+          solution.trim() !== "" &&
+          expectedEffect.trim() !== ""
+        )
       case 4:
         return true
       default:
@@ -97,7 +108,6 @@ export default function NewProposalPage() {
       return
     }
 
-    // 중복 호출 방지
     const guidelineKey = JSON.stringify({
       selectedRegion,
       title: title.trim(),
@@ -107,6 +117,12 @@ export default function NewProposalPage() {
 
     if (!forceRetry && lastGuidelineKeyRef.current === guidelineKey && guidelinesData) {
       return
+    }
+
+    const isKeyChanged = lastGuidelineKeyRef.current !== guidelineKey
+    if (isKeyChanged) {
+      setGuidelinesData(null)
+      setSelectedExamples([])
     }
 
     setIsGuidelinesLoading(true)
@@ -132,7 +148,6 @@ export default function NewProposalPage() {
 
       setGuidelinesData(response)
       lastGuidelineKeyRef.current = guidelineKey
-      setSelectedExamples([]) // 새 가이드라인이면 선택 초기화
     } catch (error) {
       console.error("[v0] Guidelines fetch error:", error)
       setGuidelinesError("가이드를 불러오지 못했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.")

@@ -1,19 +1,23 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter, useParams } from 'next/navigation'
-import { ChevronLeft, Heart, MessageCircle } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { ChevronLeft, Heart } from "lucide-react"
+import { requireAuth } from "@/lib/auth"
 
 // Mock data - TODO: Replace with API call
 const mockProposal = {
   id: 1,
   title: "안남면 마을도서관 버스 노선 확충 제안합니다.",
   content: "옥천읍에서 더큰 읍으로 다니기가 힘들어요",
-  tags: [{ id: 1, name: "교통" }, { id: 2, name: "교육" }],
+  tags: [
+    { id: 1, name: "교통" },
+    { id: 2, name: "교육" },
+  ],
   author: {
     nickname: "옥천시람",
     avatar: "",
-    region: "안내면"
+    region: "안내면",
   },
   agrees: 160,
   views: 135,
@@ -26,12 +30,13 @@ const mockProposal = {
         id: 1,
         region: "대전",
         title: "대전시 공용 자전거 '타슈' 공영차 번호 제도",
-        category: "교통"
-      }
+        category: "교통",
+      },
     ],
-    solution: "대전시 타슈 사례를 보면 OO 예산으로 OO명의 이용 증가하고 팀니다. 우수사례에서 보였듯이 옥천읍에도 공용 자전거를 학교 근처에 설치해주셨으면",
-    expectedEffects: "월별 배경과 이동할 수 있어서 삶의 질이 높아져요"
-  }
+    solution:
+      "대전시 타슈 사례를 보면 OO 예산으로 OO명의 이용 증가하고 팀니다. 우수사례에서 보였듯이 옥천읍에도 공용 자전거를 학교 근처에 설치해주셨으면",
+    expectedEffects: "월별 배경과 이동할 수 있어서 삶의 질이 높아져요",
+  },
 }
 
 const mockRelatedPolicies = [
@@ -39,14 +44,14 @@ const mockRelatedPolicies = [
     id: 1,
     region: "대전",
     title: "대전시 공용 자전거 '타슈' 공영차 번호 제도",
-    category: "교통"
+    category: "교통",
   },
   {
     id: 2,
     region: "대전",
     title: "대전시 공용 자전거 '타슈' 공영차 번호 제도",
-    category: "교통"
-  }
+    category: "교통",
+  },
 ]
 
 const mockComments = [
@@ -56,7 +61,7 @@ const mockComments = [
     content: "우리 동네에도 있으면 정말 좋겠어요!",
     likes: 10,
     createdAt: "2일 전",
-    isLiked: false
+    isLiked: false,
   },
   {
     id: 2,
@@ -64,8 +69,8 @@ const mockComments = [
     content: "우리 동네에도 있으면 정말 좋겠어요!",
     likes: 10,
     createdAt: "2일 전",
-    isLiked: false
-  }
+    isLiked: false,
+  },
 ]
 
 export default function ProposalDetailPage() {
@@ -74,21 +79,25 @@ export default function ProposalDetailPage() {
   const [proposal, setProposal] = useState(mockProposal)
   const [comments, setComments] = useState(mockComments)
 
+  useEffect(() => {
+    requireAuth(router)
+  }, [router])
+
   const handleAgree = () => {
-    setProposal(prev => ({
+    setProposal((prev) => ({
       ...prev,
       isAgreed: !prev.isAgreed,
-      agrees: prev.isAgreed ? prev.agrees - 1 : prev.agrees + 1
+      agrees: prev.isAgreed ? prev.agrees - 1 : prev.agrees + 1,
     }))
     // TODO: Call API to update agree status
   }
 
   const handleCommentLike = (commentId: number) => {
-    setComments(prev => prev.map(c =>
-      c.id === commentId
-        ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
-        : c
-    ))
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 } : c,
+      ),
+    )
     // TODO: Call API to update comment like
   }
 
@@ -101,10 +110,7 @@ export default function ProposalDetailPage() {
     <div className="flex min-h-screen flex-col bg-white pb-8">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-        <button
-          onClick={() => router.back()}
-          className="text-foreground"
-        >
+        <button onClick={() => router.back()} className="text-foreground">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <h1 className="text-lg font-semibold">정책 제안</h1>
@@ -114,19 +120,14 @@ export default function ProposalDetailPage() {
         {/* Tags */}
         <div className="flex gap-2">
           {proposal.tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="rounded-full bg-[#b8a4e8] px-4 py-1.5 text-sm font-medium text-[#1a1a1a]"
-            >
+            <span key={tag.id} className="rounded-full bg-[#b8a4e8] px-4 py-1.5 text-sm font-medium text-[#1a1a1a]">
               {tag.name}
             </span>
           ))}
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold leading-tight text-[#1a1a1a]">
-          {proposal.title}
-        </h2>
+        <h2 className="text-xl font-bold leading-tight text-[#1a1a1a]">{proposal.title}</h2>
 
         {/* Author Info */}
         <div className="flex items-center justify-between">
@@ -160,9 +161,7 @@ export default function ProposalDetailPage() {
           {/* Section 1: Problem Definition */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">1. 문제 정의</h3>
-            <p className="text-base leading-relaxed text-[#666666]">
-              {proposal.sections.problem}
-            </p>
+            <p className="text-base leading-relaxed text-[#666666]">{proposal.sections.problem}</p>
           </div>
 
           {/* Section 2: Related Policy Examples */}
@@ -192,17 +191,13 @@ export default function ProposalDetailPage() {
           {/* Section 3: Solution */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">3. 해결 방안 제시</h3>
-            <p className="text-base leading-relaxed text-[#666666]">
-              {proposal.sections.solution}
-            </p>
+            <p className="text-base leading-relaxed text-[#666666]">{proposal.sections.solution}</p>
           </div>
 
           {/* Section 4: Expected Effects */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">4. 기대 효과</h3>
-            <p className="text-base leading-relaxed text-[#666666]">
-              {proposal.sections.expectedEffects}
-            </p>
+            <p className="text-base leading-relaxed text-[#666666]">{proposal.sections.expectedEffects}</p>
           </div>
         </div>
 
@@ -235,10 +230,7 @@ export default function ProposalDetailPage() {
           <h3 className="mb-4 text-lg font-bold text-[#1a1a1a]">댓글</h3>
           <div className="space-y-3">
             {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="rounded-xl bg-[#fafafa] p-4"
-              >
+              <div key={comment.id} className="rounded-xl bg-[#fafafa] p-4">
                 <div className="mb-3 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-[#e0e0e0]" />
                   <div>
@@ -252,14 +244,10 @@ export default function ProposalDetailPage() {
                     onClick={() => handleCommentLike(comment.id)}
                     className="flex items-center gap-1.5 text-sm text-[#999999] transition-colors hover:text-[#666666]"
                   >
-                    <Heart
-                      className={`h-4 w-4 ${comment.isLiked ? "fill-red-500 text-red-500" : ""}`}
-                    />
+                    <Heart className={`h-4 w-4 ${comment.isLiked ? "fill-red-500 text-red-500" : ""}`} />
                     <span>{comment.likes}</span>
                   </button>
-                  <button className="text-sm text-[#999999] transition-colors hover:text-[#666666]">
-                    답글
-                  </button>
+                  <button className="text-sm text-[#999999] transition-colors hover:text-[#666666]">답글</button>
                 </div>
               </div>
             ))}

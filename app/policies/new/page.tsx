@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { ChevronLeft, LinkIcon } from 'lucide-react'
+import { ChevronLeft, LinkIcon } from "lucide-react"
 import type { PolicyCategory } from "@/types"
+import { requireAuth } from "@/lib/auth"
 
 const POLICY_FIELDS: PolicyCategory[] = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
@@ -19,10 +18,12 @@ export default function NewPolicyPage() {
   const [summary, setSummary] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  useEffect(() => {
+    requireAuth(router)
+  }, [router])
+
   const toggleField = (field: string) => {
-    setSelectedFields((prev) =>
-      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
-    )
+    setSelectedFields((prev) => (prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]))
   }
 
   const handleSubmit = async () => {
@@ -93,10 +94,7 @@ export default function NewPolicyPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-100 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => router.back()}
-            className="flex h-10 w-10 items-center justify-center"
-          >
+          <button onClick={() => router.back()} className="flex h-10 w-10 items-center justify-center">
             <ChevronLeft className="h-6 w-6 text-gray-700" />
           </button>
           <h1 className="text-[16px] font-semibold text-gray-900">정책 사례 공유</h1>
@@ -134,9 +132,7 @@ export default function NewPolicyPage() {
 
         {/* Policy Field */}
         <div className="space-y-3">
-          <label className="text-[14px] font-medium text-gray-900">
-            정책 분야(복수 선택 가능)
-          </label>
+          <label className="text-[14px] font-medium text-gray-900">정책 분야(복수 선택 가능)</label>
           <div className="flex flex-wrap gap-2">
             {POLICY_FIELDS.map((field) => (
               <button

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Heart, MessageCircle, ThumbsUp } from "lucide-react"
+import { requireAuth } from "@/lib/auth"
 
 const MOCK_EXAMPLE_DETAIL = {
   id: 1,
@@ -195,6 +196,8 @@ export default function PolicyDetailPage() {
   const [proposalLikes, setProposalLikes] = useState<Record<number, { liked: boolean; count: number }>>({})
 
   useEffect(() => {
+    if (!requireAuth(router)) return
+
     const id = Number(params.id)
     const exampleData = MOCK_EXAMPLES_DETAIL[id]
 
@@ -207,7 +210,7 @@ export default function PolicyDetailPage() {
       })
       setProposalLikes(initialProposalLikes)
     }
-  }, [params.id])
+  }, [params.id, router])
 
   if (!example) {
     return (
