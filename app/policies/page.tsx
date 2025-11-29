@@ -1,98 +1,93 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Search, Heart, MessageCircle, Bookmark, SlidersHorizontal, Plus, ChevronDown, ArrowUpDown } from "lucide-react"
-import type { Example, PolicyCategory } from "@/types"
-import { POLICY_CATEGORIES } from "@/lib/constants"
 import { BottomNav } from "@/components/bottom-nav"
-
-// Mock data for now
-const MOCK_EXAMPLES: Example[] = [
-  {
-    id: 1,
-    rid: 1,
-    uid: 1,
-    title: "청년 살기 좋은 지역으로: 함양군 청년 특성 강화한 정책 펼쳐",
-    content: "청년들을 위한 주거 지원과 일자리 창출 정책",
-    reference: "함양군",
-    read_cnt: 150,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-    tags: [{ id: 2, name: "청년" }],
-    likes: 50,
-    comments: 50,
-    isLiked: false,
-    isBookmarked: false,
-    imageUrl: "/images/image.png",
-  },
-  {
-    id: 2,
-    rid: 1,
-    uid: 2,
-    title: "진짜 크게 준비해야...케데헌 열풍, 2회 김천김밥축제 대박 예열",
-    content: "대중교통 개선과 지역 연결성 강화",
-    reference: "김천시",
-    read_cnt: 220,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-    tags: [{ id: 3, name: "문화" }],
-    likes: 50,
-    comments: 50,
-    isLiked: false,
-    isBookmarked: false,
-    imageUrl: "/images/image.png",
-  },
-]
+import { POLICY_CATEGORIES } from "@/lib/constants"
+import type { ExampleSummary, PolicyCategory } from "@/types"
+import { apiFetch, withQuery, API_ENDPOINTS } from "@/lib/api"
 
 export default function PoliciesPage() {
   const router = useRouter()
+
   const [selectedCategory, setSelectedCategory] = useState<PolicyCategory>("전체")
-  const [examples, setExamples] = useState<Example[]>(MOCK_EXAMPLES)
   const [searchQuery, setSearchQuery] = useState("")
+  const [examples, setExamples] = useState<ExampleSummary[]>([])
+
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const [liked, setLiked] = useState<Record<number, boolean>>({})
+  const [bookmarked, setBookmarked] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
-    // Check if user is logged in
-    const user = localStorage.getItem("user")
-    if (!user) {
-      router.push("/welcome")
-      return
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
+    if (!token) {
+      router.replace("/signup")
     }
-
-    const customExamples = JSON.parse(localStorage.getItem("customExamples") || "[]")
-    setExamples([...customExamples, ...MOCK_EXAMPLES])
   }, [router])
 
-  const handleLike = (id: number) => {
-    setExamples(
-      examples.map((ex) =>
-        ex.id === id ? { ...ex, likes: (ex.likes || 0) + (ex.isLiked ? -1 : 1), isLiked: !ex.isLiked } : ex,
-      ),
-    )
-    // TODO: API call to backend
-  }
+  useEffect(() => {
+    let cancelled = false
 
-  const handleBookmark = (id: number) => {
-    setExamples(examples.map((ex) => (ex.id === id ? { ...ex, isBookmarked: !ex.isBookmarked } : ex)))
-    // TODO: API call to backend
-  }
+    async function run() {
+      setIsLoading(true)
+      setErrorMsg(null)
+
+      try {
+        const endpoint = withQuery(API_ENDPOINTS.GET_EXAMPLES, {
+          q: searchQuery || undefined,
+          page: 1,
+        })
+
+        const data = await apiFetch<{ examples: ExampleSummary[] }>(endpoint, {
+          auth: true,
+        })
+
+        if (!cancelled) {
+          setExamples(Array.isArray(data?.examples) ? data.examples : [])
+        }
+      } catch (err) {
+        console.error("[policies] fetch error:", err)
+        if (!cancelled) {
+          const msg =
+            err instanceof Error && err.message.includes("API Error")
+              ? "정책 목록을 불러오는 중 서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
+              : "정책 목록을 불러오지 못했어요. 네트워크 상태를 확인해 주세요."
+          setErrorMsg(msg)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [searchQuery])
+
+  const filteredExamples = useMemo(() => {
+    if (selectedCategory === "전체") return examples
+    return examples.filter((ex) => ex.categories?.includes(selectedCategory))
+  }, [examples, selectedCategory])
 
   const handleCardClick = (id: number) => {
     router.push(`/policies/${id}`)
   }
 
-  const filteredExamples = examples.filter((ex) => {
-    if (selectedCategory !== "전체") {
-      const hasCategory = ex.tags?.some((tag: any) => tag.name === selectedCategory)
-      if (!hasCategory) return false
-    }
-    if (searchQuery) {
-      return ex.title.toLowerCase().includes(searchQuery.toLowerCase())
-    }
-    return true
-  })
+  const handleLike = (id: number) => {
+    // TODO: backend like endpoint not implemented
+    setLiked((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const handleBookmark = (id: number) => {
+    // TODO: backend bookmark endpoint not implemented
+    setBookmarked((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f5f5f5]">
@@ -144,28 +139,37 @@ export default function PoliciesPage() {
 
       {/* Policy Cards */}
       <div className="flex-1 space-y-3 p-4 pb-24">
-        {filteredExamples.map((example) => (
-          <Card key={example.id} className="overflow-hidden border-0 shadow-sm bg-white rounded-xl">
-            {/* Thumbnail */}
-            <div onClick={() => handleCardClick(example.id)} className="cursor-pointer">
-              {example.imageUrl ? (
-                <div className="relative aspect-[2/1] overflow-hidden">
-                  <img
-                    src={example.imageUrl || "/placeholder.svg"}
-                    alt={example.title}
-                    className="h-full w-full object-cover"
-                  />
+        {isLoading && (
+          <div className="space-y-3">
+            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <div className="h-40 animate-pulse rounded-2xl bg-gray-200" />
+            <div className="h-40 animate-pulse rounded-2xl bg-gray-200" />
+          </div>
+        )}
 
-                  {/* Tags positioned at bottom left of thumbnail */}
-                  <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                    {example.tags?.slice(0, 2).map((tag: any) => (
-                      <span key={tag.id} className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white">
-                        {tag.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
+        {!isLoading && errorMsg && (
+          <div className="rounded-2xl border bg-white p-4">
+            <p className="text-sm text-gray-700">{errorMsg}</p>
+            <div className="mt-3">
+              <Button variant="outline" onClick={() => setSearchQuery((q) => q)}>
+                다시 시도
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !errorMsg && filteredExamples.length === 0 && (
+          <div className="rounded-2xl border bg-white p-6 text-center">
+            <p className="text-sm text-gray-500">검색 결과가 없어요.</p>
+          </div>
+        )}
+
+        {!isLoading &&
+          !errorMsg &&
+          filteredExamples.length > 0 &&
+          filteredExamples.map((example) => (
+            <Card key={example.id} className="overflow-hidden border-0 shadow-sm bg-white rounded-xl">
+              <div onClick={() => handleCardClick(example.id)} className="cursor-pointer">
                 <div className="relative aspect-[2/1] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
                   <div className="flex h-full items-center justify-center">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
@@ -184,59 +188,59 @@ export default function PoliciesPage() {
                     </svg>
                   </div>
 
-                  {/* Tags positioned at bottom left of thumbnail */}
                   <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                    {example.tags?.slice(0, 2).map((tag: any) => (
-                      <span key={tag.id} className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white">
-                        {tag.name}
+                    {example.categories?.slice(0, 2).map((cat) => (
+                      <span key={cat} className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white">
+                        {cat}
                       </span>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Content */}
-              <div className="space-y-2 p-3">
-                {/* Title */}
-                <h3 className="text-pretty text-[14px] font-semibold leading-snug text-black">{example.title}</h3>
+                {/* Content */}
+                <div className="space-y-2 p-3">
+                  <h3 className="text-pretty text-[14px] font-semibold leading-snug text-black">{example.title}</h3>
+                  <p className="text-sm text-gray-500">{example.region}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="px-3 pb-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-sm text-[#929292]">
+              <div className="px-3 pb-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-sm text-[#929292]">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleLike(example.id)
+                      }}
+                      className="flex items-center gap-1 transition-colors hover:text-[#b69df8]"
+                    >
+                      <Heart
+                        className={`h-[17px] w-[17px] ${liked[example.id] ? "fill-[#b69df8] text-[#b69df8]" : ""}`}
+                      />
+                      <span className="text-[13px]">0</span>
+                    </button>
+                    <button className="flex items-center gap-1 transition-colors hover:text-[#b69df8]">
+                      <MessageCircle className="h-[17px] w-[17px]" />
+                      <span className="text-[13px]">0</span>
+                    </button>
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleLike(example.id)
+                      handleBookmark(example.id)
                     }}
-                    className="flex items-center gap-1 transition-colors hover:text-[#b69df8]"
+                    className="transition-colors hover:text-[#b69df8]"
                   >
-                    <Heart className={`h-[17px] w-[17px] ${example.isLiked ? "fill-[#b69df8] text-[#b69df8]" : ""}`} />
-                    <span className="text-[13px]">{example.likes || 0}</span>
-                  </button>
-                  <button className="flex items-center gap-1 transition-colors hover:text-[#b69df8]">
-                    <MessageCircle className="h-[17px] w-[17px]" />
-                    <span className="text-[13px]">{example.comments || 0}</span>
+                    <Bookmark
+                      className={`h-[18px] w-[18px] ${
+                        bookmarked[example.id] ? "fill-[#b69df8] text-[#b69df8]" : "text-[#929292]"
+                      }`}
+                    />
                   </button>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleBookmark(example.id)
-                  }}
-                  className="transition-colors hover:text-[#b69df8]"
-                >
-                  <Bookmark
-                    className={`h-[18px] w-[18px] ${
-                      example.isBookmarked ? "fill-[#b69df8] text-[#b69df8]" : "text-[#929292]"
-                    }`}
-                  />
-                </button>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
       </div>
 
       <button
