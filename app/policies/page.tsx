@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Search, Heart, MessageCircle, Bookmark, SlidersHorizontal, Plus, ChevronDown, ArrowUpDown } from 'lucide-react'
+import { Search, Heart, MessageCircle, Bookmark, SlidersHorizontal, Plus, ChevronDown, ArrowUpDown } from "lucide-react"
 import type { Example, PolicyCategory } from "@/types"
 import { POLICY_CATEGORIES } from "@/lib/constants"
 import { BottomNav } from "@/components/bottom-nav"
@@ -22,14 +21,12 @@ const MOCK_EXAMPLES: Example[] = [
     read_cnt: 150,
     created_at: Date.now(),
     updated_at: Date.now(),
-    tags: [
-      { id: 2, name: "청년" },
-    ],
+    tags: [{ id: 2, name: "청년" }],
     likes: 50,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IWAMerGDlj4g5FWOus2YJNEsBRgH3m.png",
+    imageUrl: "/images/image.png",
   },
   {
     id: 2,
@@ -41,14 +38,12 @@ const MOCK_EXAMPLES: Example[] = [
     read_cnt: 220,
     created_at: Date.now(),
     updated_at: Date.now(),
-    tags: [
-      { id: 3, name: "문화" },
-    ],
+    tags: [{ id: 3, name: "문화" }],
     likes: 50,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-ii2mhseAYrnP5i93skeBSmJHwy7T3V.png",
+    imageUrl: "/images/image.png",
   },
 ]
 
@@ -90,7 +85,7 @@ export default function PoliciesPage() {
 
   const filteredExamples = examples.filter((ex) => {
     if (selectedCategory !== "전체") {
-      const hasCategory = ex.tags?.some((tag) => tag.name === selectedCategory)
+      const hasCategory = ex.tags?.some((tag: any) => tag.name === selectedCategory)
       if (!hasCategory) return false
     }
     if (searchQuery) {
@@ -155,19 +150,16 @@ export default function PoliciesPage() {
             <div onClick={() => handleCardClick(example.id)} className="cursor-pointer">
               {example.imageUrl ? (
                 <div className="relative aspect-[2/1] overflow-hidden">
-                  <img 
-                    src={example.imageUrl || "/placeholder.svg"} 
+                  <img
+                    src={example.imageUrl || "/placeholder.svg"}
                     alt={example.title}
                     className="h-full w-full object-cover"
                   />
-                  
+
                   {/* Tags positioned at bottom left of thumbnail */}
                   <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                    {example.tags?.slice(0, 2).map((tag) => (
-                      <span 
-                        key={tag.id} 
-                        className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white"
-                      >
+                    {example.tags?.slice(0, 2).map((tag: any) => (
+                      <span key={tag.id} className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white">
                         {tag.name}
                       </span>
                     ))}
@@ -177,19 +169,25 @@ export default function PoliciesPage() {
                 <div className="relative aspect-[2/1] bg-gradient-to-br from-[#e8deff] to-[#d3c1ff]/30">
                   <div className="flex h-full items-center justify-center">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="text-[#d3c1ff]">
-                      <rect x="4" y="4" width="16" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+                      <rect
+                        x="4"
+                        y="4"
+                        width="16"
+                        height="12"
+                        rx="1"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        opacity="0.5"
+                      />
                       <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.5" />
                       <path d="M4 15l4-4 3 3 5-5 4 4" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
                     </svg>
                   </div>
-                  
+
                   {/* Tags positioned at bottom left of thumbnail */}
                   <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                    {example.tags?.slice(0, 2).map((tag) => (
-                      <span 
-                        key={tag.id} 
-                        className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white"
-                      >
+                    {example.tags?.slice(0, 2).map((tag: any) => (
+                      <span key={tag.id} className="rounded bg-[#c5b0ff] px-2 py-0.5 text-xs font-medium text-white">
                         {tag.name}
                       </span>
                     ))}
@@ -222,7 +220,7 @@ export default function PoliciesPage() {
                     <span className="text-[13px]">{example.comments || 0}</span>
                   </button>
                 </div>
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleBookmark(example.id)

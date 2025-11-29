@@ -1,34 +1,30 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from 'next/navigation'
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, Heart, MessageCircle, ThumbsUp } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import type { Example } from "@/types"
+import type React from "react"
 
-// Mock detailed example data
-const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
-  1: {
-    id: 1,
-    rid: 1,
-    uid: 1,
-    title: "'청년 살기 좋은 지역으로' 함양군 청년 특성 강화한 정책 펼쳐",
-    content: "청년들을 위한 주거 지원과 일자리 창출 정책",
-    reference: "함양군",
-    read_cnt: 135,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-    tags: [
-      { id: 2, name: "청년" },
-    ],
-    likes: 50,
-    comments: 50,
-    isLiked: false,
-    isBookmarked: false,
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-IWAMerGDlj4g5FWOus2YJNEsBRgH3m.png",
-    fullContent: "◯◯군이 지역 청년들의 안정적인 지원을 듣기 위해 '청년 지원정책' 종합정책을 올해 3월부터 시행한다.",
-    detailedContent: `
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, Heart, MessageCircle, ThumbsUp } from "lucide-react"
+
+const MOCK_EXAMPLE_DETAIL = {
+  id: 1,
+  rid: 1,
+  uid: 1,
+  title: "'청년 살기 좋은 지역으로' 함양군 청년 특성 강화한 정책 펼쳐",
+  content: "청년들을 위한 주거 지원과 일자리 창출 정책",
+  reference: "함양군",
+  read_cnt: 135,
+  created_at: Date.now(),
+  updated_at: Date.now(),
+  tags: [{ id: 2, name: "청년" }],
+  likes: 50,
+  comments: 50,
+  isLiked: false,
+  isBookmarked: false,
+  imageUrl: "/images/image.png",
+  fullContent: "◯◯군이 지역 청년들의 안정적인 지원을 듣기 위해 '청년 지원정책' 종합정책을 올해 3월부터 시행한다.",
+  detailedContent: `
 ## 정책 대상
 
 - 만 19세에서 34세 이하의 ◯◯ 거주 청년
@@ -51,69 +47,66 @@ const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
 
 - 취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)
 - 또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원
-    `,
-    targetAudience: [
-      "만 19세에서 34세 이하의 ◯◯ 거주 청년",
-      "취업 준비 중이거나 사회초년생, 창업을 계획 중인 청년 등",
-      "연소득 기준 이하 청년들도 포함하여 폭넓게 참여 가능",
-    ],
-    mainContent: {
-      housing: [
-        "청년 1인 가구를 위한 월세 지원(최대 20만 원, 1년간)",
-        "청년 전용 공공임대주택 100세대 공급",
-      ],
-      startup: [
-        "예비창업자에게 최대 1,000만 원 창업 초기자금 및 멘토 제공",
-        "공영 시설 공공 오피스·창업공간 무료 이용",
-      ],
-      mentalHealth: [
-        "취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)",
-        "또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원",
-      ],
-    },
-    articleUrl: "https://example.com/article/youth-policy",
-    relatedProposals: [
-      {
-        id: 1,
-        user: { nickname: "옥천군민" },
-        content: "옥천군에도 청년 창업 지원 확충 바랍니다.",
-        likes: 50,
-        comments: 50,
-        date: "2025.11.01",
-      },
-      {
-        id: 2,
-        user: { nickname: "청년1호" },
-        content: "청년 1인 가구 월세 지원 정책 어떠기요?",
-        likes: 50,
-        comments: 50,
-        date: "2025.11.01",
-      },
-    ],
-    commentsList: [
-      {
-        id: 1,
-        user: { nickname: "옥이네" },
-        content: "우리 동네에도 있으면 정말 좋겠어요!",
-        likes: 10,
-        date: "2일 전",
-      },
-      {
-        id: 2,
-        user: { nickname: "옥이네" },
-        content: "우리 동네에도 있으면 정말 좋겠어요!",
-        likes: 10,
-        date: "2일 전",
-      },
-      {
-        id: 3,
-        user: { nickname: "옥이네" },
-        content: "우리 동네에도 있으면 정말 좋겠어요!",
-        likes: 10,
-        date: "2일 전",
-      },
+  `,
+  targetAudience: [
+    "만 19세에서 34세 이하의 ◯◯ 거주 청년",
+    "취업 준비 중이거나 사회초년생, 창업을 계획 중인 청년 등",
+    "연소득 기준 이하 청년들도 포함하여 폭넓게 참여 가능",
+  ],
+  mainContent: {
+    housing: ["청년 1인 가구를 위한 월세 지원(최대 20만 원, 1년간)", "청년 전용 공공임대주택 100세대 공급"],
+    startup: ["예비창업자에게 최대 1,000만 원 창업 초기자금 및 멘토 제공", "공영 시설 공공 오피스·창업공간 무료 이용"],
+    mentalHealth: [
+      "취업 스트레스와 불안 예술을 위한 상담심리 무료 제공(연 5회)",
+      "또래 커뮤니티 프로그램 운영으로 사회적 관계망 형성 지원",
     ],
   },
+  articleUrl: "https://example.com/article/youth-policy",
+  relatedProposals: [
+    {
+      id: 1,
+      user: { nickname: "옥천군민" },
+      content: "옥천군에도 청년 창업 지원 확충 바랍니다.",
+      likes: 50,
+      comments: 50,
+      date: "2025.11.01",
+    },
+    {
+      id: 2,
+      user: { nickname: "청년1호" },
+      content: "청년 1인 가구 월세 지원 정책 어떠기요?",
+      likes: 50,
+      comments: 50,
+      date: "2025.11.01",
+    },
+  ],
+  commentsList: [
+    {
+      id: 1,
+      user: { nickname: "옥이네" },
+      content: "우리 동네에도 있으면 정말 좋겠어요!",
+      likes: 10,
+      date: "2일 전",
+    },
+    {
+      id: 2,
+      user: { nickname: "옥이네" },
+      content: "우리 동네에도 있으면 정말 좋겠어요!",
+      likes: 10,
+      date: "2일 전",
+    },
+    {
+      id: 3,
+      user: { nickname: "옥이네" },
+      content: "우리 동네에도 있으면 정말 좋겠어요!",
+      likes: 10,
+      date: "2일 전",
+    },
+  ],
+}
+
+const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
+  1: MOCK_EXAMPLE_DETAIL,
   2: {
     id: 2,
     rid: 1,
@@ -124,15 +117,14 @@ const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
     read_cnt: 220,
     created_at: Date.now(),
     updated_at: Date.now(),
-    tags: [
-      { id: 3, name: "문화" },
-    ],
+    tags: [{ id: 3, name: "문화" }],
     likes: 50,
     comments: 50,
     isLiked: false,
     isBookmarked: false,
-    imageUrl: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-ii2mhseAYrnP5i93skeBSmJHwy7T3V.png",
-    fullContent: "김천시가 지역 특산물인 김밥을 활용한 대규모 문화축제를 개최하여 지역 경제 활성화와 관광 산업 육성을 추진하고 있습니다.",
+    imageUrl: "/images/image.png",
+    fullContent:
+      "김천시가 지역 특산물인 김밥을 활용한 대규모 문화축제를 개최하여 지역 경제 활성화와 관광 산업 육성을 추진하고 있습니다.",
     detailedContent: `
 ## 축제 개요
 
@@ -159,11 +151,7 @@ const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
 - 지역 문화예술단 공연
 - 야간 불꽃놀이 행사
     `,
-    targetAudience: [
-      "김천시민 및 인근 지역 주민",
-      "전국의 요리 애호가 및 관광객",
-      "가족 단위 방문객",
-    ],
+    targetAudience: ["김천시민 및 인근 지역 주민", "전국의 요리 애호가 및 관광객", "가족 단위 방문객"],
     mainContent: {
       housing: [],
       startup: [],
@@ -202,19 +190,19 @@ const MOCK_EXAMPLES_DETAIL: Record<number, typeof MOCK_EXAMPLE_DETAIL> = {
 export default function PolicyDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [example, setExample] = useState<typeof MOCK_EXAMPLES_DETAIL[1] | null>(null)
+  const [example, setExample] = useState<typeof MOCK_EXAMPLE_DETAIL | null>(null)
   const [commentLikes, setCommentLikes] = useState<Record<number, boolean>>({})
   const [proposalLikes, setProposalLikes] = useState<Record<number, { liked: boolean; count: number }>>({})
 
   useEffect(() => {
     const id = Number(params.id)
     const exampleData = MOCK_EXAMPLES_DETAIL[id]
-    
+
     if (exampleData) {
       setExample(exampleData)
-      
+
       const initialProposalLikes: Record<number, { liked: boolean; count: number }> = {}
-      exampleData.relatedProposals.forEach((proposal) => {
+      exampleData.relatedProposals.forEach((proposal: any) => {
         initialProposalLikes[proposal.id] = { liked: false, count: proposal.likes }
       })
       setProposalLikes(initialProposalLikes)
@@ -263,7 +251,7 @@ export default function PolicyDetailPage() {
 
   const handleProposalLike = (proposalId: number, e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     setProposalLikes((prev) => {
       const current = prev[proposalId]
       return {
@@ -294,8 +282,8 @@ export default function PolicyDetailPage() {
 
       {example.imageUrl ? (
         <div className="relative aspect-[16/9] overflow-hidden">
-          <img 
-            src={example.imageUrl || "/placeholder.svg"} 
+          <img
+            src={example.imageUrl || "/placeholder.svg"}
             alt={example.title}
             className="h-full w-full object-cover"
           />
@@ -314,7 +302,7 @@ export default function PolicyDetailPage() {
 
       <div className="space-y-6 px-4 pt-5">
         <div className="flex gap-2">
-          {example.tags?.map((tag) => (
+          {example.tags?.map((tag: any) => (
             <span key={tag.id} className="rounded-full bg-[#b4a0e5] px-3 py-1 text-sm font-medium text-white">
               {tag.name}
             </span>
@@ -324,7 +312,7 @@ export default function PolicyDetailPage() {
         <h2 className="text-pretty text-xl font-bold leading-tight">{example.title}</h2>
 
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span>{new Date(example.created_at).toLocaleDateString('ko-KR')}</span>
+          <span>{new Date(example.created_at).toLocaleDateString("ko-KR")}</span>
           <span>조회 {example.read_cnt}</span>
         </div>
 
@@ -342,7 +330,7 @@ export default function PolicyDetailPage() {
               <h3 className="text-base font-bold">정책 대상</h3>
             </div>
             <ul className="space-y-1 text-sm leading-relaxed">
-              {example.targetAudience.map((item, index) => (
+              {example.targetAudience.map((item: string, index: number) => (
                 <li key={index} className="flex gap-2">
                   <span>•</span>
                   <span>{item}</span>
@@ -366,7 +354,7 @@ export default function PolicyDetailPage() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold">1. 주거 안정 지원</h4>
                 <ul className="space-y-1 text-sm leading-relaxed">
-                  {example.mainContent.housing.map((item, index) => (
+                  {example.mainContent.housing.map((item: string, index: number) => (
                     <li key={index} className="flex gap-2">
                       <span>•</span>
                       <span>{item}</span>
@@ -380,7 +368,7 @@ export default function PolicyDetailPage() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold">2. 창업 지원</h4>
                 <ul className="space-y-1 text-sm leading-relaxed">
-                  {example.mainContent.startup.map((item, index) => (
+                  {example.mainContent.startup.map((item: string, index: number) => (
                     <li key={index} className="flex gap-2">
                       <span>•</span>
                       <span>{item}</span>
@@ -394,7 +382,7 @@ export default function PolicyDetailPage() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold">3. 마음건강 프로그램</h4>
                 <ul className="space-y-1 text-sm leading-relaxed">
-                  {example.mainContent.mentalHealth.map((item, index) => (
+                  {example.mainContent.mentalHealth.map((item: string, index: number) => (
                     <li key={index} className="flex gap-2">
                       <span>•</span>
                       <span>{item}</span>
@@ -410,7 +398,7 @@ export default function PolicyDetailPage() {
           <Button
             variant="outline"
             onClick={handleViewArticle}
-            className="flex-1 rounded-xl border-2 py-6 font-semibold hover:bg-muted"
+            className="flex-1 rounded-xl border-2 py-6 font-semibold hover:bg-muted bg-transparent"
           >
             기사 원문 보러 가기
           </Button>
@@ -427,7 +415,7 @@ export default function PolicyDetailPage() {
           <div className="space-y-4">
             <h3 className="text-lg font-bold">이 정책을 참고한 제안</h3>
             <div className="space-y-3">
-              {example.relatedProposals.map((proposal) => (
+              {example.relatedProposals.map((proposal: any) => (
                 <div
                   key={proposal.id}
                   onClick={() => handleProposalClick(proposal.id)}
@@ -470,7 +458,7 @@ export default function PolicyDetailPage() {
               <h3 className="text-lg font-bold">댓글</h3>
             </div>
             <div className="space-y-3">
-              {example.commentsList.map((comment) => (
+              {example.commentsList.map((comment: any) => (
                 <div key={comment.id} className="space-y-3 rounded-2xl border bg-white p-4 shadow-sm">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 flex-shrink-0 rounded-full bg-[#e5e5e5]" />

@@ -156,7 +156,7 @@ export default function ProposalsPage() {
             {/* Tags and Date */}
             <div className="mb-2.5 flex items-center justify-between">
               <div className="flex gap-1.5">
-                {proposal.tags?.map((tag) => (
+                {proposal.tags?.map((tag: any) => (
                   <span key={tag.id} className="rounded bg-[#b69df8] px-2.5 py-0.5 text-xs font-medium text-white">
                     {tag.name}
                   </span>

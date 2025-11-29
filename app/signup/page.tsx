@@ -132,7 +132,9 @@ export default function OnboardingPage() {
         token = data.userid || `mock_${Date.now()}`
       }
 
-      localStorage.setItem("access_token", token)
+      if (token) {
+        localStorage.setItem("access_token", token)
+      }
 
       const user = {
         nickname: formData.nickname,

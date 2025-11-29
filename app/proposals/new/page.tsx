@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, Check, ChevronDown } from 'lucide-react'
+import { useRouter, useSearchParams } from "next/navigation"
+import { ChevronLeft, Check, ChevronDown } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
-import { apiRequest, API_ENDPOINTS } from "@/lib/api"
+import { apiRequest, API_ENDPOINTS_NOT_IMPLEMENTED } from "@/lib/api"
+import type { PolicyCategory } from "@/types"
 
 type Step = 1 | 2 | 3 | 4
 
@@ -13,14 +14,14 @@ const mockAIExamples = [
     id: 1,
     title: "대전시 공용 자전거 '타슈' 공영적 반응 세도",
     region: "대전",
-    category: "교통"
+    category: "교통",
   },
   {
     id: 2,
     title: "대전시 공용 자전거 '타슈' 공영적 반응 세도",
     region: "대전",
-    category: "교통"
-  }
+    category: "교통",
+  },
 ]
 
 export default function NewProposalPage() {
@@ -28,15 +29,15 @@ export default function NewProposalPage() {
   const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   // Step 1: Basic Info
   const [selectedRegion, setSelectedRegion] = useState("")
   const [title, setTitle] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  
+
   // Step 2: Problem Definition
   const [problem, setProblem] = useState("")
-  
+
   // Step 3: Solution & AI Examples
   const [selectedExamples, setSelectedExamples] = useState<number[]>([])
   const [solution, setSolution] = useState("")
@@ -44,17 +45,17 @@ export default function NewProposalPage() {
 
   const toggleCategory = (category: string) => {
     if (selectedCategories.includes(category)) {
-      setSelectedCategories(prev => prev.filter(c => c !== category))
+      setSelectedCategories((prev) => prev.filter((c) => c !== category))
     } else {
-      setSelectedCategories(prev => [...prev, category])
+      setSelectedCategories((prev) => [...prev, category])
     }
   }
 
   const toggleExample = (exampleId: number) => {
     if (selectedExamples.includes(exampleId)) {
-      setSelectedExamples(prev => prev.filter(id => id !== exampleId))
+      setSelectedExamples((prev) => prev.filter((id) => id !== exampleId))
     } else {
-      setSelectedExamples(prev => [...prev, exampleId])
+      setSelectedExamples((prev) => [...prev, exampleId])
     }
   }
 
@@ -81,12 +82,12 @@ export default function NewProposalPage() {
 
   const handleSubmit = async () => {
     if (isSubmitting) return
-    
+
     setIsSubmitting(true)
-    
+
     try {
       const userStr = localStorage.getItem("user")
-      
+
       if (!userStr) {
         alert("로그인이 필요합니다.")
         router.push("/signup")
@@ -94,7 +95,7 @@ export default function NewProposalPage() {
       }
 
       const user = JSON.parse(userStr)
-      
+
       if (!user.userid) {
         alert("로그인이 필요합니다.")
         router.push("/signup")
@@ -114,7 +115,7 @@ export default function NewProposalPage() {
 
       console.log("[v0] Submitting proposal:", proposalData)
 
-      const response = await apiRequest(API_ENDPOINTS.CREATE_PROPOSAL, {
+      const response = await apiRequest(API_ENDPOINTS_NOT_IMPLEMENTED.CREATE_PROPOSAL, {
         method: "POST",
         body: JSON.stringify(proposalData),
       })
@@ -139,20 +140,15 @@ export default function NewProposalPage() {
   const progressPercentage = (currentStep / 4) * 100
 
   useEffect(() => {
-    const categoryFromUrl = searchParams.get('category')
-    
-    console.log("[v0] Category from URL:", categoryFromUrl)
-    console.log("[v0] Available categories:", POLICY_CATEGORIES)
-    
+    const categoryFromUrl = searchParams.get("category")
+
     if (categoryFromUrl) {
-      const validCategories = POLICY_CATEGORIES.filter(c => c !== "전체")
-      console.log("[v0] Valid categories:", validCategories)
-      
-      if (validCategories.includes(categoryFromUrl)) {
-        console.log("[v0] Setting selected category:", categoryFromUrl)
-        setSelectedCategories([categoryFromUrl])
-      } else {
-        console.log("[v0] Category not found in valid categories:", categoryFromUrl)
+      const validCategories: Exclude<PolicyCategory, "전체">[] = POLICY_CATEGORIES.filter(
+        (c): c is Exclude<PolicyCategory, "전체"> => c !== "전체",
+      )
+
+      if ((validCategories as readonly string[]).includes(categoryFromUrl)) {
+        setSelectedCategories([categoryFromUrl as Exclude<PolicyCategory, "전체">])
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,7 +160,7 @@ export default function NewProposalPage() {
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-4">
           <button
-            onClick={() => currentStep === 1 ? router.back() : setCurrentStep((currentStep - 1) as Step)}
+            onClick={() => (currentStep === 1 ? router.back() : setCurrentStep((currentStep - 1) as Step))}
             className="text-gray-900"
           >
             <ChevronLeft className="h-6 w-6" />
@@ -172,7 +168,7 @@ export default function NewProposalPage() {
           <h1 className="text-lg font-semibold text-gray-900">정책 제안</h1>
           <div className="w-6" />
         </div>
-        
+
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">
           <div
@@ -202,16 +198,16 @@ export default function NewProposalPage() {
 
             {/* Region Selection */}
             <div className="space-y-3">
-              <label className="block text-base font-semibold text-gray-900">
-                어느 지역에 제안하시나요?
-              </label>
+              <label className="block text-base font-semibold text-gray-900">어느 지역에 제안하시나요?</label>
               <div className="relative">
                 <select
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3 pr-10 text-base text-gray-900 focus:border-[#b4a0e5] focus:outline-none focus:ring-2 focus:ring-[#b4a0e5]/20"
                 >
-                  <option value="" disabled>옥천읍</option>
+                  <option value="" disabled>
+                    옥천읍
+                  </option>
                   {OKCHEON_REGIONS.map((region) => (
                     <option key={region} value={region}>
                       {region}
@@ -224,9 +220,7 @@ export default function NewProposalPage() {
 
             {/* Title Input */}
             <div className="space-y-3">
-              <label className="block text-base font-semibold text-gray-900">
-                정책 제안 제목을 입력해주세요.
-              </label>
+              <label className="block text-base font-semibold text-gray-900">정책 제안 제목을 입력해주세요.</label>
               <input
                 type="text"
                 value={title}
@@ -242,7 +236,7 @@ export default function NewProposalPage() {
                 정책 분야를 선택해주세요. (복수 선택 가능)
               </label>
               <div className="flex flex-wrap gap-2">
-                {POLICY_CATEGORIES.filter(c => c !== "전체").map((category) => (
+                {POLICY_CATEGORIES.filter((c) => c !== "전체").map((category) => (
                   <button
                     key={category}
                     onClick={() => toggleCategory(category)}
@@ -270,9 +264,7 @@ export default function NewProposalPage() {
               <h2 className="text-xl font-bold text-gray-900">문제 정의하기</h2>
             </div>
 
-            <p className="text-base font-semibold text-gray-900">
-              어떤 문제를 해결하고 싶으신가요?
-            </p>
+            <p className="text-base font-semibold text-gray-900">어떤 문제를 해결하고 싶으신가요?</p>
 
             <textarea
               value={problem}
@@ -315,9 +307,7 @@ export default function NewProposalPage() {
                     className="relative w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition-all hover:border-[#b4a0e5] hover:bg-white"
                   >
                     <div className="mb-3 pr-8">
-                      <p className="text-sm font-medium leading-snug text-gray-900">
-                        {example.title}
-                      </p>
+                      <p className="text-sm font-medium leading-snug text-gray-900">{example.title}</p>
                     </div>
                     <div className="flex gap-2">
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-900">
@@ -349,9 +339,7 @@ export default function NewProposalPage() {
 
             {/* Solution Input */}
             <div className="space-y-3">
-              <label className="block text-base font-semibold text-gray-900">
-                문제를 어떻게 해결할 수 있을까요?
-              </label>
+              <label className="block text-base font-semibold text-gray-900">문제를 어떻게 해결할 수 있을까요?</label>
               <textarea
                 value={solution}
                 onChange={(e) => setSolution(e.target.value)}
@@ -362,9 +350,7 @@ export default function NewProposalPage() {
 
             {/* Expected Effect Input */}
             <div className="space-y-3">
-              <label className="block text-base font-semibold text-gray-900">
-                기대되는 효과는 무엇인가요?
-              </label>
+              <label className="block text-base font-semibold text-gray-900">기대되는 효과는 무엇인가요?</label>
               <textarea
                 value={expectedEffect}
                 onChange={(e) => setExpectedEffect(e.target.value)}
@@ -426,12 +412,10 @@ export default function NewProposalPage() {
                 {selectedExamples.length > 0 ? (
                   <div className="space-y-3">
                     {mockAIExamples
-                      .filter(ex => selectedExamples.includes(ex.id))
+                      .filter((ex) => selectedExamples.includes(ex.id))
                       .map((example) => (
                         <div key={example.id} className="rounded-xl bg-white p-4 shadow-sm">
-                          <p className="mb-3 text-sm font-medium leading-snug text-gray-900">
-                            {example.title}
-                          </p>
+                          <p className="mb-3 text-sm font-medium leading-snug text-gray-900">{example.title}</p>
                           <div className="flex gap-2">
                             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
                               {example.region}
@@ -445,13 +429,9 @@ export default function NewProposalPage() {
                   </div>
                 ) : (
                   <div className="rounded-xl bg-white p-4 shadow-sm">
-                    <p className="mb-3 text-sm font-medium text-gray-900">
-                      대전시 공용 자전거 '타슈' 공영적 반응 세도
-                    </p>
+                    <p className="mb-3 text-sm font-medium text-gray-900">대전시 공용 자전거 '타슈' 공영적 반응 세도</p>
                     <div className="flex gap-2">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">
-                        대전
-                      </span>
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-900">대전</span>
                       <span className="rounded-full bg-[#b4a0e5] px-3 py-1 text-xs font-medium text-gray-900">
                         교통
                       </span>
@@ -463,7 +443,8 @@ export default function NewProposalPage() {
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">3. 해결 방안 제시</h4>
                 <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {solution || "대전시 타슈 사례를 보면 OO 예산으로 OO명이 이용 중이라고 합니다. 우수사례에서 보았듯이 옥천읍에도 공용 자전거를 확보 근처에 설치해주세요"}
+                  {solution ||
+                    "대전시 타슈 사례를 보면 OO 예산으로 OO명이 이용 중이라고 합니다. 우수사례에서 보았듯이 옥천읍에도 공용 자전거를 확보 근처에 설치해주세요"}
                 </p>
               </div>
 
@@ -477,7 +458,15 @@ export default function NewProposalPage() {
 
             {/* AI Correction Button (Floating) */}
             <button className="fixed bottom-28 right-6 z-20 flex flex-col items-center justify-center gap-1 rounded-full bg-[#b4a0e5] px-4 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-900">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-900"
+              >
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -498,10 +487,7 @@ export default function NewProposalPage() {
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
-          {currentStep === 4 
-            ? (isSubmitting ? "게시 중..." : "게시하기")
-            : "다음 단계"
-          }
+          {currentStep === 4 ? (isSubmitting ? "게시 중..." : "게시하기") : "다음 단계"}
         </button>
       </div>
     </div>

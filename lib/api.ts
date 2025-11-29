@@ -85,15 +85,13 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchO
   const { body, auth = false, headers: customHeaders, ...restOptions } = options
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
 
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...customHeaders,
-  }
+  const headers = new Headers(customHeaders as HeadersInit)
+  headers.set("Content-Type", "application/json")
 
   if (auth) {
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
     if (token) {
-      headers["Authorization"] = token
+      headers.set("Authorization", token)
     }
   }
 

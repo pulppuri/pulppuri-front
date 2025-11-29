@@ -160,3 +160,11 @@ export interface SignupData_NotImplemented {
   region: string
   interests: string[]
 }
+
+// ============================================================
+// ============================================================
+export type Region = Region_NotImplemented
+export type Example = Example_NotImplemented
+export type Proposal = Proposal_NotImplemented
+export type Tag = Tag_NotImplemented
+export type SignupData = SignupData_NotImplemented
