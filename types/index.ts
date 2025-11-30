@@ -119,6 +119,20 @@ export interface CreateUserResponse {
 // 프론트엔드 전용 타입 (UI/온보딩용)
 // ============================================================
 
+/**
+ * CreateProposalRequest 타입 추가 (POST /proposals 요청 바디용)
+ */
+export interface CreateProposalRequest {
+  rid: number
+  title: string
+  categories: string[]
+  problem: string
+  solution: string
+  expectedEffect: string
+  selectedExampleIds: number[]
+  guidelineKey?: string | null
+}
+
 export interface User {
   id: number
   age: number

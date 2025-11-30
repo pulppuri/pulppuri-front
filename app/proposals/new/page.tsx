@@ -6,7 +6,7 @@ import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-reac
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
 import { fetchRegionId, createGuideline } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
-import type { PolicyCategory, GuidelinesResponse, ExampleSummary } from "@/types"
+import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalRequest } from "@/types"
 
 type Step = 1 | 2 | 3 | 4
 
@@ -168,14 +168,19 @@ export default function NewProposalPage() {
 
     const token = localStorage.getItem("access_token")
     if (!token) {
-      router.push("/signup")
+      router.replace("/signup")
+      return
+    }
+
+    if (resolvedRid === null) {
+      alert("지역 정보를 확인할 수 없어요. 다시 시도해 주세요.")
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const payload = {
+      const payload: CreateProposalRequest = {
         rid: resolvedRid,
         title: title.trim(),
         categories: selectedCategories,
