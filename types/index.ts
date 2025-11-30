@@ -35,9 +35,10 @@ export interface ExampleDetail {
   content?: string
   body?: string
   reference?: string
+  articleUrl?: string // 기사 원문 URL (백엔드 제공 시)
   read_cnt?: number
-  created_at?: number
-  updated_at?: number
+  created_at?: string | number // string | number로 보강
+  updated_at?: string | number // string | number로 보강
   thumbnail?: string
   // UI 전용 (백엔드 미구현, 프론트에서 관리)
   likes?: number

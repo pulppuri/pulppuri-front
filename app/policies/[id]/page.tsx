@@ -2,10 +2,21 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Heart, MessageCircle, RefreshCw } from "lucide-react"
+import { ChevronLeft, Heart, Bookmark, RefreshCw } from "lucide-react" // Bookmark 아이콘 추가, MessageCircle 제거
 import { requireAuth } from "@/lib/auth"
 import { fetchExampleDetail } from "@/lib/api"
 import type { ExampleDetail } from "@/types"
+
+const formatDate = (value: string | number | undefined): string | null => {
+  if (!value) return null
+  try {
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return null
+    return date.toLocaleDateString("ko-KR")
+  } catch {
+    return null
+  }
+}
 
 const PolicyDetailPage = () => {
   const router = useRouter()
@@ -100,11 +111,6 @@ const PolicyDetailPage = () => {
     // TODO: backend endpoint not implemented
   }
 
-  const handleViewArticle = () => {
-    // TODO: backend에서 articleUrl 제공 시 연동
-    alert("기사 원문 링크가 아직 제공되지 않습니다.")
-  }
-
   const handleProposePolicy = () => {
     const categoryTag = example?.categories?.[0] || ""
     router.push(`/proposals/new?category=${encodeURIComponent(categoryTag)}`)
@@ -175,6 +181,8 @@ const PolicyDetailPage = () => {
     )
   }
 
+  const formattedDate = formatDate(example.created_at)
+
   return (
     <div className="min-h-screen bg-background pb-8">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b bg-background px-4 py-3">
@@ -218,7 +226,7 @@ const PolicyDetailPage = () => {
         <h2 className="text-pretty text-xl font-bold leading-tight">{example.title}</h2>
 
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          {example.created_at && <span>{new Date(example.created_at).toLocaleDateString("ko-KR")}</span>}
+          {formattedDate && <span>{formattedDate}</span>}
           {example.read_cnt !== undefined && <span>조회 {example.read_cnt}</span>}
           {example.region && <span>{example.region}</span>}
         </div>
@@ -230,18 +238,19 @@ const PolicyDetailPage = () => {
           </div>
         )}
 
-        {/* 기사 원문 버튼 */}
-        {example.reference && (
+        {example.articleUrl ? (
           <div className="flex gap-3">
             <Button
               variant="outline"
-              onClick={handleViewArticle}
+              onClick={() => window.open(example.articleUrl, "_blank")}
               className="flex-1 rounded-xl border-2 py-6 font-semibold hover:bg-muted bg-transparent"
             >
               기사 원문 보러 가기
             </Button>
           </div>
-        )}
+        ) : example.reference ? (
+          <p className="text-sm text-muted-foreground">출처: {example.reference}</p>
+        ) : null}
 
         {/* 정책 제안하기 버튼 */}
         <Button
@@ -251,7 +260,6 @@ const PolicyDetailPage = () => {
           이 사례로 새로운 정책 제안하기
         </Button>
 
-        {/* 좋아요/북마크 UI (백엔드 미구현) */}
         <div className="flex items-center justify-center gap-6 py-4">
           <button
             onClick={handleLike}
@@ -264,9 +272,25 @@ const PolicyDetailPage = () => {
             onClick={handleBookmark}
             className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
-            <MessageCircle className={`h-6 w-6 ${bookmarked ? "fill-[#b4a0e5] text-[#b4a0e5]" : ""}`} />
-            <span>{example.comments || 0}</span>
+            {/* TODO: backend endpoint not implemented */}
+            <Bookmark className={`h-6 w-6 ${bookmarked ? "fill-[#b4a0e5] text-[#b4a0e5]" : ""}`} />
           </button>
+        </div>
+
+        <div className="space-y-4 pt-4">
+          <h3 className="text-lg font-bold">이 정책을 참고한 제안</h3>
+          {/* TODO: backend endpoint not implemented - GET /proposals?eid={id} */}
+          <div className="rounded-xl border bg-card p-6 text-center">
+            <p className="text-muted-foreground">관련 제안이 아직 없습니다</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-4">
+          <h3 className="text-lg font-bold">댓글</h3>
+          {/* TODO: backend endpoint not implemented - GET /comments?eid={id} */}
+          <div className="rounded-xl border bg-card p-6 text-center">
+            <p className="text-muted-foreground">댓글이 아직 없습니다</p>
+          </div>
         </div>
       </div>
     </div>
