@@ -31,6 +31,22 @@ export function isAuthenticated(): boolean {
 }
 
 /**
+ * 로그인된 사용자가 인증 페이지 접근 시 /policies로 리다이렉트
+ * @param router - Next.js App Router instance
+ * @returns boolean - 리다이렉트 발생 여부 (true면 리다이렉트됨)
+ */
+export function redirectIfLoggedIn(router: AppRouterInstance): boolean {
+  if (typeof window === "undefined") return false
+
+  const token = localStorage.getItem("access_token")
+  if (token) {
+    router.replace("/policies")
+    return true
+  }
+  return false
+}
+
+/**
  * 로그아웃 처리: access_token, user 제거 후 /signup으로 이동
  */
 export function logout(router: AppRouterInstance): void {

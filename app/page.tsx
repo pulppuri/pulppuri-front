@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 
 export default function SplashScreen() {
@@ -10,24 +10,14 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const userStr = localStorage.getItem("user")
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr)
-          if (user.userid) {
-            console.log("[v0] User found in localStorage, auto-login:", user.userid)
-            router.push("/policies")
-            return
-          }
-        } catch (e) {
-          console.error("[v0] Failed to parse user data:", e)
-          localStorage.removeItem("user")
-        }
+      const token = localStorage.getItem("access_token")
+      if (token) {
+        router.replace("/policies")
+        return
       }
-      
-      console.log("[v0] No user found, redirecting to onboarding")
+
       setIsLoading(false)
-      router.push("/signup")
+      router.replace("/welcome")
     }
 
     const timer = setTimeout(checkAuth, 2000)

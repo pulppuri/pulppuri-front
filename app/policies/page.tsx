@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/bottom-nav"
 import { POLICY_CATEGORIES } from "@/lib/constants"
 import type { ExampleSummary, PolicyCategory } from "@/types"
 import { apiFetch, withQuery, API_ENDPOINTS } from "@/lib/api"
+import { requireAuth } from "@/lib/auth"
 
 export default function PoliciesPage() {
   const router = useRouter()
@@ -24,10 +25,7 @@ export default function PoliciesPage() {
   const [bookmarked, setBookmarked] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
-    if (!token) {
-      router.replace("/signup")
-    }
+    requireAuth(router)
   }, [router])
 
   useEffect(() => {

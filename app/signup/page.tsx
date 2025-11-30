@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { OKCHEON_REGIONS, GENDER_OPTIONS, JOB_CATEGORIES } from "@/lib/constants
 import { ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import { apiFetch, API_ENDPOINTS, fetchRegionId } from "@/lib/api"
+import { redirectIfLoggedIn } from "@/lib/auth"
 
 interface OnboardingData {
   nickname: string
@@ -32,6 +33,10 @@ export default function OnboardingPage() {
     region: "",
     interests: [],
   })
+
+  useEffect(() => {
+    redirectIfLoggedIn(router)
+  }, [router])
 
   const interestCategories = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
 
@@ -118,7 +123,7 @@ export default function OnboardingPage() {
       localStorage.setItem("user", JSON.stringify({ ...formData, rid }))
 
       // Step 4: Navigate to main page
-      router.push("/policies")
+      router.replace("/policies")
     } catch (err) {
       console.error("[signup] submit error:", err)
 

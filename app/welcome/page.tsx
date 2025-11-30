@@ -1,12 +1,18 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
+import { redirectIfLoggedIn } from "@/lib/auth"
 
 export default function WelcomePage() {
   const router = useRouter()
+
+  useEffect(() => {
+    redirectIfLoggedIn(router)
+  }, [router])
 
   const handleStart = () => {
     router.push("/signup")
