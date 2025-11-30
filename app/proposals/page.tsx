@@ -38,6 +38,8 @@ export default function ProposalsPage() {
   }, [router])
 
   useEffect(() => {
+    if (!requireAuth(router)) return
+
     let cancelled = false
 
     async function loadProposals() {
@@ -73,7 +75,7 @@ export default function ProposalsPage() {
     return () => {
       cancelled = true
     }
-  }, [searchQuery, retryKey])
+  }, [searchQuery, retryKey, router])
 
   const filteredProposals =
     selectedCategory === "전체" ? proposals : proposals.filter((p) => p.categories?.includes(selectedCategory))

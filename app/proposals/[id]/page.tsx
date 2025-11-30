@@ -28,6 +28,8 @@ export default function ProposalDetailPage() {
   }, [router])
 
   useEffect(() => {
+    if (!requireAuth(router)) return
+
     const rawId = params.id
     if (!rawId || Array.isArray(rawId)) {
       setNotFound(true)
@@ -79,11 +81,13 @@ export default function ProposalDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [params.id, retryKey])
+  }, [params.id, retryKey, router])
 
   const handleAgree = () => {
-    setIsAgreed((prev) => !prev)
-    setAgreeCount((prev) => (isAgreed ? prev - 1 : prev + 1))
+    setIsAgreed((prev) => {
+      setAgreeCount((c) => (prev ? Math.max(0, c - 1) : c + 1))
+      return !prev
+    })
     // TODO: backend endpoint not implemented
   }
 
