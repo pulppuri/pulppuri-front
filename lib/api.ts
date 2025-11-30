@@ -1,7 +1,14 @@
 // API configuration for backend integration
 // 로컬 FastAPI 백엔드: http://localhost:8000
 
-import type { RegionItem, ExampleSummary, GuidelinesResponse, ExampleDetail } from "@/types"
+import type {
+  RegionItem,
+  ExampleSummary,
+  GuidelinesResponse,
+  ExampleDetail,
+  ProposalSummary,
+  ProposalDetail,
+} from "@/types"
 
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
@@ -24,6 +31,9 @@ export const API_ENDPOINTS = {
 
   // Guidelines
   CREATE_GUIDELINE: "/guidelines", // POST: { title, rid, categories, problem } → GuidelinesResponse
+
+  GET_PROPOSALS: "/proposals", // GET: ?q=&page= → { proposals: ProposalSummary[] }
+  GET_PROPOSAL_DETAIL: (id: number | string) => `/proposals/${id}`, // GET → { proposal: ProposalDetail }
 }
 
 // ============================================================
@@ -48,7 +58,6 @@ export const API_ENDPOINTS_NOT_IMPLEMENTED = {
   CREATE_EXAMPLE_COMMENT: "/examples/:id/comments",
 
   // Proposals
-  GET_PROPOSALS: "/proposals",
   GET_PROPOSAL_BY_ID: "/proposals/:id",
   CREATE_PROPOSAL: "/proposals",
   LIKE_PROPOSAL: "/proposals/:id/like",
@@ -211,6 +220,24 @@ export async function createGuideline(data: {
     body: data,
     auth: true,
   })
+}
+
+/**
+ * 정책 제안 목록 조회 (GET /proposals)
+ * @returns { proposals: ProposalSummary[] }
+ */
+export async function fetchProposals(query?: string, page = 1): Promise<{ proposals: ProposalSummary[] }> {
+  const endpoint = withQuery(API_ENDPOINTS.GET_PROPOSALS, { q: query || undefined, page })
+  return apiFetch<{ proposals: ProposalSummary[] }>(endpoint, { auth: true })
+}
+
+/**
+ * 정책 제안 상세 조회 (GET /proposals/{id})
+ * @returns { proposal: ProposalDetail }
+ */
+export async function fetchProposalDetail(id: number | string): Promise<{ proposal: ProposalDetail }> {
+  const endpoint = API_ENDPOINTS.GET_PROPOSAL_DETAIL(id)
+  return apiFetch<{ proposal: ProposalDetail }>(endpoint, { auth: true })
 }
 
 // ============================================================

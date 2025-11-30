@@ -59,6 +59,45 @@ export interface GuidelinesResponse {
 }
 
 /**
+ * GET /proposals 응답의 proposals 배열 아이템
+ */
+export interface ProposalSummary {
+  id: number
+  title: string
+  region?: string
+  categories: string[]
+  created_at?: string | number
+  // UI용 임시 필드 (백엔드 미구현)
+  likes?: number
+  comments?: number
+  bookmarked?: boolean
+}
+
+/**
+ * GET /proposals/{id} 응답의 proposal 객체
+ */
+export interface ProposalDetail {
+  id: number
+  title: string
+  region?: string
+  categories: string[]
+  problem?: string
+  solution?: string
+  expectedEffect?: string
+  created_at?: string | number
+  updated_at?: string | number
+  author?: {
+    nickname: string
+    region?: string
+  }
+  // UI용 임시 필드 (백엔드 미구현)
+  likes?: number
+  comments?: number
+  agrees?: number
+  views?: number
+}
+
+/**
  * POST /users 요청 바디
  */
 export interface CreateUserRequest {
