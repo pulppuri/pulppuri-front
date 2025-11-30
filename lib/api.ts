@@ -1,7 +1,7 @@
 // API configuration for backend integration
 // 로컬 FastAPI 백엔드: http://localhost:8000
 
-import type { RegionItem, ExampleSummary, GuidelinesResponse } from "@/types"
+import type { RegionItem, ExampleSummary, GuidelinesResponse, ExampleDetail } from "@/types"
 
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
 
   // Examples (정책 사례)
   GET_EXAMPLES: "/examples", // GET: ?q=&page= → { examples: ExampleSummary[] }
+  // CHANGE: 함수형 엔드포인트 추가: GET /examples/{id}
+  GET_EXAMPLE_DETAIL: (id: number | string) => `/examples/${id}`,
 
   // Guidelines
   CREATE_GUIDELINE: "/guidelines", // POST: { title, rid, categories, problem } → GuidelinesResponse
@@ -183,6 +185,15 @@ export async function createUser(data: {
 export async function fetchExamples(query?: string, page = 1): Promise<{ examples: ExampleSummary[] }> {
   const endpoint = withQuery(API_ENDPOINTS.GET_EXAMPLES, { q: query, page })
   return apiFetch<{ examples: ExampleSummary[] }>(endpoint)
+}
+
+/**
+ * 정책 사례 상세 조회 (GET /examples/{id})
+ * @returns { example: ExampleDetail }
+ */
+export async function fetchExampleDetail(id: number | string): Promise<{ example: ExampleDetail }> {
+  const endpoint = API_ENDPOINTS.GET_EXAMPLE_DETAIL(id)
+  return apiFetch<{ example: ExampleDetail }>(endpoint, { auth: true })
 }
 
 /**

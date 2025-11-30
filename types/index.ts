@@ -25,6 +25,26 @@ export interface ExampleSummary {
 }
 
 /**
+ * GET /examples/{id} 응답의 example 객체
+ */
+export interface ExampleDetail {
+  id: number
+  title: string
+  region: string
+  categories: string[]
+  content?: string
+  body?: string
+  reference?: string
+  read_cnt?: number
+  created_at?: number
+  updated_at?: number
+  thumbnail?: string
+  // UI 전용 (백엔드 미구현, 프론트에서 관리)
+  likes?: number
+  comments?: number
+}
+
+/**
  * POST /guidelines 응답
  */
 export interface GuidelinesResponse {
