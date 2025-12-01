@@ -11,6 +11,9 @@ import type { ExampleSummary, PolicyCategory } from "@/types"
 import { apiFetch, withQuery, API_ENDPOINTS } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
 
+const PAGE_SIZE_GUESS = 10
+const MAX_PAGES = 50
+
 export default function PoliciesPage() {
   const router = useRouter()
 
@@ -20,53 +23,71 @@ export default function PoliciesPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [loadedCount, setLoadedCount] = useState(0)
 
   const [liked, setLiked] = useState<Record<number, boolean>>({})
   const [bookmarked, setBookmarked] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
-    requireAuth(router)
-  }, [router])
+    if (!requireAuth(router)) return
 
-  useEffect(() => {
     let cancelled = false
 
-    async function run() {
+    async function loadAllExamples() {
       setIsLoading(true)
       setErrorMsg(null)
+      setLoadedCount(0)
 
       try {
-        const endpoint = withQuery(API_ENDPOINTS.GET_EXAMPLES, {
-          q: searchQuery || undefined,
-          page: 1,
-        })
+        const all: ExampleSummary[] = []
+        let page = 1
 
-        const data = await apiFetch<{ examples: ExampleSummary[] }>(endpoint, {
-          auth: true,
-        })
+        while (!cancelled && page <= MAX_PAGES) {
+          const endpoint = withQuery(API_ENDPOINTS.GET_EXAMPLES, {
+            q: searchQuery || undefined,
+            page,
+          })
+
+          const data = await apiFetch<{ examples: ExampleSummary[] }>(endpoint, {
+            auth: true,
+          })
+
+          if (cancelled) return
+
+          const batch = Array.isArray(data?.examples) ? data.examples : []
+
+          if (batch.length === 0) break
+
+          all.push(...batch)
+          setLoadedCount(all.length)
+
+          if (batch.length < PAGE_SIZE_GUESS) break
+
+          page += 1
+        }
 
         if (!cancelled) {
-          setExamples(Array.isArray(data?.examples) ? data.examples : [])
+          setExamples(all)
         }
       } catch (err) {
+        if (cancelled) return
         console.error("[policies] fetch error:", err)
-        if (!cancelled) {
-          const msg =
-            err instanceof Error && err.message.includes("API Error")
-              ? "정책 목록을 불러오는 중 서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요."
-              : "정책 목록을 불러오지 못했어요. 네트워크 상태를 확인해 주세요."
-          setErrorMsg(msg)
+        if (err instanceof Error && err.message.includes("API Error")) {
+          setErrorMsg("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+        } else {
+          setErrorMsg("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.")
         }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
     }
 
-    run()
+    loadAllExamples()
+
     return () => {
       cancelled = true
     }
-  }, [searchQuery])
+  }, [searchQuery, router])
 
   const filteredExamples = useMemo(() => {
     if (selectedCategory === "전체") return examples
@@ -78,18 +99,15 @@ export default function PoliciesPage() {
   }
 
   const handleLike = (id: number) => {
-    // TODO: backend like endpoint not implemented
     setLiked((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   const handleBookmark = (id: number) => {
-    // TODO: backend bookmark endpoint not implemented
     setBookmarked((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f5f5f5]">
-      {/* Header with Search */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
         <div className="flex items-center gap-2.5 p-3.5">
           <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-[#fafafa] px-3.5 py-2.5 border border-gray-100">
@@ -107,7 +125,6 @@ export default function PoliciesPage() {
           </Button>
         </div>
 
-        {/* Category Tabs */}
         <div className="overflow-x-auto scrollbar-hide px-3.5 pb-2.5">
           <div className="flex gap-2">
             {POLICY_CATEGORIES.map((category) => (
@@ -135,11 +152,12 @@ export default function PoliciesPage() {
         </div>
       </div>
 
-      {/* Policy Cards */}
       <div className="flex-1 space-y-3 p-4 pb-24">
         {isLoading && (
           <div className="space-y-3">
-            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <div className="text-sm text-gray-500">
+              {loadedCount > 0 ? `${loadedCount}개 로드됨...` : "불러오는 중..."}
+            </div>
             <div className="h-40 animate-pulse rounded-2xl bg-gray-200" />
             <div className="h-40 animate-pulse rounded-2xl bg-gray-200" />
           </div>
@@ -149,7 +167,7 @@ export default function PoliciesPage() {
           <div className="rounded-2xl border bg-white p-4">
             <p className="text-sm text-gray-700">{errorMsg}</p>
             <div className="mt-3">
-              <Button variant="outline" onClick={() => setSearchQuery((q) => q)}>
+              <Button variant="outline" onClick={() => setSearchQuery((q) => q + " ")}>
                 다시 시도
               </Button>
             </div>
@@ -195,7 +213,6 @@ export default function PoliciesPage() {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="space-y-2 p-3">
                   <h3 className="text-pretty text-[14px] font-semibold leading-snug text-black">{example.title}</h3>
                   <p className="text-sm text-gray-500">{example.region}</p>
@@ -248,7 +265,6 @@ export default function PoliciesPage() {
         <Plus className="h-6 w-6" />
       </button>
 
-      {/* Bottom Navigation */}
       <BottomNav />
     </div>
   )
