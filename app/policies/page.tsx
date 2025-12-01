@@ -8,7 +8,7 @@ import { Search, Heart, MessageCircle, Bookmark, SlidersHorizontal, Plus, Chevro
 import { BottomNav } from "@/components/bottom-nav"
 import { POLICY_CATEGORIES } from "@/lib/constants"
 import type { ExampleSummary, PolicyCategory } from "@/types"
-import { apiFetch, withQuery, API_ENDPOINTS } from "@/lib/api"
+import { fetchExamples } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
 
 const PAGE_SIZE_GUESS = 10
@@ -24,6 +24,7 @@ export default function PoliciesPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [loadedCount, setLoadedCount] = useState(0)
+  const [retryKey, setRetryKey] = useState(0)
 
   const [liked, setLiked] = useState<Record<number, boolean>>({})
   const [bookmarked, setBookmarked] = useState<Record<number, boolean>>({})
@@ -43,18 +44,10 @@ export default function PoliciesPage() {
         let page = 1
 
         while (!cancelled && page <= MAX_PAGES) {
-          const endpoint = withQuery(API_ENDPOINTS.GET_EXAMPLES, {
-            q: searchQuery || undefined,
-            page,
-          })
-
-          const data = await apiFetch<{ examples: ExampleSummary[] }>(endpoint, {
-            auth: true,
-          })
+          const data = await fetchExamples(searchQuery || undefined, page)
+          const batch = Array.isArray(data?.examples) ? data.examples : []
 
           if (cancelled) return
-
-          const batch = Array.isArray(data?.examples) ? data.examples : []
 
           if (batch.length === 0) break
 
@@ -87,7 +80,7 @@ export default function PoliciesPage() {
     return () => {
       cancelled = true
     }
-  }, [searchQuery, router])
+  }, [searchQuery, retryKey, router])
 
   const filteredExamples = useMemo(() => {
     if (selectedCategory === "전체") return examples
@@ -167,7 +160,7 @@ export default function PoliciesPage() {
           <div className="rounded-2xl border bg-white p-4">
             <p className="text-sm text-gray-700">{errorMsg}</p>
             <div className="mt-3">
-              <Button variant="outline" onClick={() => setSearchQuery((q) => q + " ")}>
+              <Button variant="outline" onClick={() => setRetryKey((k) => k + 1)}>
                 다시 시도
               </Button>
             </div>
