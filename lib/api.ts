@@ -9,6 +9,8 @@ import type {
   ProposalSummary,
   ProposalDetail,
   CreateProposalDto,
+  ReviseProposalInput,
+  ReviseProposalOutput,
 } from "@/types"
 
 export const API_CONFIG = {
@@ -276,6 +278,80 @@ export async function createProposal(dto: CreateProposalDto): Promise<{ pid: num
     body: dto,
     auth: true,
   })
+}
+
+// ============================================================
+// AI 교정 기능 (Mock 구현)
+// TODO: 실제 LLM 엔드포인트 연동 시 이 함수를 수정
+// ============================================================
+
+/**
+ * AI 텍스트 교정 (Mock)
+ * 실제 LLM 연동 시 이 함수를 수정
+ * @param input - 교정할 텍스트 (problem, method, effect)
+ * @returns 교정된 텍스트
+ */
+export async function reviseProposalText(input: ReviseProposalInput): Promise<ReviseProposalOutput> {
+  // TODO: 실제 LLM 엔드포인트 연동
+  // 현재는 Mock 구현: 간단한 문장 다듬기 시뮬레이션
+
+  await new Promise((resolve) => setTimeout(resolve, 1200 + Math.random() * 800))
+
+  const mockRevise = (text: string): string => {
+    if (!text.trim()) return text
+
+    let revised = text
+
+    // 간단한 교정 규칙 적용 (mock)
+    // 1. 문장 끝에 마침표 추가
+    if (
+      revised.trim() &&
+      !revised.trim().endsWith(".") &&
+      !revised.trim().endsWith("요") &&
+      !revised.trim().endsWith("다")
+    ) {
+      revised = revised.trim() + "."
+    }
+
+    // 2. "~해요" -> "~합니다" 변환 (일부)
+    revised = revised.replace(/힘들어요/g, "어려움을 겪고 있습니다")
+    revised = revised.replace(/없어요/g, "부족합니다")
+    revised = revised.replace(/좋겠어요/g, "기대됩니다")
+
+    // 3. 접속사 추가
+    if (revised.includes("그래서") === false && revised.length > 20) {
+      revised = revised.replace(/\. /, ". 따라서 ")
+    }
+
+    // 4. 강조 표현 추가
+    revised = revised.replace(/이동할 수 있/g, "편리하게 이동할 수 있")
+    revised = revised.replace(/설치해/g, "체계적으로 설치해")
+
+    return revised
+  }
+
+  return {
+    problem: mockRevise(input.problem),
+    method: mockRevise(input.method),
+    effect: mockRevise(input.effect),
+  }
+}
+
+/**
+ * 단일 필드 AI 교정 (Mock)
+ * @param fieldName - 필드 이름 (problem, method, effect)
+ * @param text - 교정할 텍스트
+ * @returns 교정된 텍스트
+ */
+export async function reviseProposalField(fieldName: "problem" | "method" | "effect", text: string): Promise<string> {
+  const input: ReviseProposalInput = {
+    problem: fieldName === "problem" ? text : "",
+    method: fieldName === "method" ? text : "",
+    effect: fieldName === "effect" ? text : "",
+  }
+
+  const result = await reviseProposalText(input)
+  return result[fieldName]
 }
 
 // ============================================================

@@ -1,14 +1,20 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
-import { fetchRegionId, createGuideline, createProposal } from "@/lib/api"
+import { fetchRegionId, createGuideline, createProposal, reviseProposalText, reviseProposalField } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
 import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalDto } from "@/types"
+import AiEditableField, { type FieldStatus } from "@/components/AiEditableField"
 
 type Step = 1 | 2 | 3 | 4
+
+interface FieldState {
+  status: FieldStatus
+  aiCorrectedText?: string
+}
 
 export default function NewProposalPage() {
   const router = useRouter()
@@ -34,6 +40,18 @@ export default function NewProposalPage() {
   const [guidelinesError, setGuidelinesError] = useState<string | null>(null)
   const [resolvedRid, setResolvedRid] = useState<number | null>(null)
   const lastGuidelineKeyRef = useRef<string | null>(null)
+
+  const [isAiCorrecting, setIsAiCorrecting] = useState(false)
+  const [focusedField, setFocusedField] = useState<"problem" | "method" | "effect" | null>(null)
+  const [fieldStates, setFieldStates] = useState<{
+    problem: FieldState
+    method: FieldState
+    effect: FieldState
+  }>({
+    problem: { status: "idle" },
+    method: { status: "idle" },
+    effect: { status: "idle" },
+  })
 
   useEffect(() => {
     requireAuth(router)
@@ -163,6 +181,76 @@ export default function NewProposalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep])
 
+  const handleAiCorrectAll = useCallback(async () => {
+    setIsAiCorrecting(true)
+    setFieldStates({
+      problem: { status: "loading" },
+      method: { status: "loading" },
+      effect: { status: "loading" },
+    })
+
+    try {
+      const result = await reviseProposalText({
+        problem: problem,
+        method: solution,
+        effect: expectedEffect,
+      })
+
+      setFieldStates({
+        problem: { status: "suggested", aiCorrectedText: result.problem },
+        method: { status: "suggested", aiCorrectedText: result.method },
+        effect: { status: "suggested", aiCorrectedText: result.effect },
+      })
+    } catch (error) {
+      console.error("[v0] AI correction error:", error)
+      // 에러 시 idle로 복귀
+      setFieldStates({
+        problem: { status: "idle" },
+        method: { status: "idle" },
+        effect: { status: "idle" },
+      })
+    } finally {
+      setIsAiCorrecting(false)
+    }
+  }, [problem, solution, expectedEffect])
+
+  const handleReCorrectField = useCallback(
+    async (fieldName: "problem" | "method" | "effect") => {
+      setIsAiCorrecting(true)
+      setFieldStates((prev) => ({
+        ...prev,
+        [fieldName]: { status: "loading" },
+      }))
+
+      try {
+        const currentText = fieldName === "problem" ? problem : fieldName === "method" ? solution : expectedEffect
+        const result = await reviseProposalField(fieldName, currentText)
+
+        setFieldStates((prev) => ({
+          ...prev,
+          [fieldName]: { status: "suggested", aiCorrectedText: result },
+        }))
+      } catch (error) {
+        console.error(`[v0] AI re-correction error for ${fieldName}:`, error)
+        setFieldStates((prev) => ({
+          ...prev,
+          [fieldName]: { status: "idle" },
+        }))
+      } finally {
+        setIsAiCorrecting(false)
+      }
+    },
+    [problem, solution, expectedEffect],
+  )
+
+  const handleConfirmField = useCallback((fieldName: "problem" | "method" | "effect") => {
+    setFieldStates((prev) => ({
+      ...prev,
+      [fieldName]: { status: "confirmed" },
+    }))
+    setFocusedField(null)
+  }, [])
+
   const handleSubmit = async () => {
     if (isSubmitting) return
 
@@ -235,6 +323,19 @@ export default function NewProposalPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-white">
+      {isAiCorrecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex gap-2">
+              <div className="h-3 w-3 animate-bounce rounded-full bg-[#b4a0e5]" style={{ animationDelay: "0ms" }} />
+              <div className="h-3 w-3 animate-bounce rounded-full bg-[#b4a0e5]" style={{ animationDelay: "150ms" }} />
+              <div className="h-3 w-3 animate-bounce rounded-full bg-[#b4a0e5]" style={{ animationDelay: "300ms" }} />
+            </div>
+            <p className="text-lg font-semibold text-gray-700">AI가 글을 교정하고 있어요</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-4">
@@ -476,7 +577,7 @@ export default function NewProposalPage() {
           </div>
         )}
 
-        {/* Step 4: Final Summary */}
+        {/* Step 4: Final Summary - AI 교정 기능 통합 */}
         {currentStep === 4 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -513,15 +614,41 @@ export default function NewProposalPage() {
               </h3>
             </div>
 
-            {/* Summary Sections - wrapped in gray background */}
+            {/* Summary Sections - with AI editable fields */}
             <div className="space-y-6 rounded-2xl bg-gray-50 p-5">
+              {/* 1. 문제 정의 */}
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">1. 문제 정의</h4>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {problem || "옥천읍에서 다른 읍으로 다니기가 힘들어요"}
-                </p>
+                <AiEditableField
+                  value={problem}
+                  onChange={setProblem}
+                  status={fieldStates.problem.status}
+                  aiCorrectedText={fieldStates.problem.aiCorrectedText}
+                  onFocus={() => setFocusedField("problem")}
+                  onBlur={() => {}}
+                  isFocused={focusedField === "problem"}
+                  placeholder="문제를 입력해주세요"
+                />
+                {focusedField === "problem" && fieldStates.problem.status === "suggested" && (
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      onClick={() => handleReCorrectField("problem")}
+                      disabled={isAiCorrecting}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      다시 교정받기
+                    </button>
+                    <button
+                      onClick={() => handleConfirmField("problem")}
+                      className="rounded-lg bg-[#b4a0e5] px-4 py-2 text-sm font-bold text-gray-900 hover:bg-[#a693d9] transition-colors"
+                    >
+                      확정하기
+                    </button>
+                  </div>
+                )}
               </div>
 
+              {/* 2. 관련 정책 사례 */}
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">2. 관련 정책 사례</h4>
                 {getSelectedExamplesList().length > 0 ? (
@@ -546,38 +673,81 @@ export default function NewProposalPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">선택된 사례가 없습니다.</p>
+                  <p className="text-sm text-gray-500">관련 정책 사례가 아직 없습니다.</p>
                 )}
               </div>
 
+              {/* 3. 해결 방안 제시 */}
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">3. 해결 방안 제시</h4>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {solution || "해결 방안을 입력해주세요."}
-                </p>
+                <AiEditableField
+                  value={solution}
+                  onChange={setSolution}
+                  status={fieldStates.method.status}
+                  aiCorrectedText={fieldStates.method.aiCorrectedText}
+                  onFocus={() => setFocusedField("method")}
+                  onBlur={() => {}}
+                  isFocused={focusedField === "method"}
+                  placeholder="해결 방안을 입력해주세요"
+                />
+                {focusedField === "method" && fieldStates.method.status === "suggested" && (
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      onClick={() => handleReCorrectField("method")}
+                      disabled={isAiCorrecting}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      다시 교정받기
+                    </button>
+                    <button
+                      onClick={() => handleConfirmField("method")}
+                      className="rounded-lg bg-[#b4a0e5] px-4 py-2 text-sm font-bold text-gray-900 hover:bg-[#a693d9] transition-colors"
+                    >
+                      확정하기
+                    </button>
+                  </div>
+                )}
               </div>
 
+              {/* 4. 기대 효과 */}
               <div>
                 <h4 className="mb-3 text-base font-bold text-gray-900">4. 기대 효과</h4>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                  {expectedEffect || "기대 효과를 입력해주세요."}
-                </p>
+                <AiEditableField
+                  value={expectedEffect}
+                  onChange={setExpectedEffect}
+                  status={fieldStates.effect.status}
+                  aiCorrectedText={fieldStates.effect.aiCorrectedText}
+                  onFocus={() => setFocusedField("effect")}
+                  onBlur={() => {}}
+                  isFocused={focusedField === "effect"}
+                  placeholder="기대 효과를 입력해주세요"
+                />
+                {focusedField === "effect" && fieldStates.effect.status === "suggested" && (
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      onClick={() => handleReCorrectField("effect")}
+                      disabled={isAiCorrecting}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      다시 교정받기
+                    </button>
+                    <button
+                      onClick={() => handleConfirmField("effect")}
+                      className="rounded-lg bg-[#b4a0e5] px-4 py-2 text-sm font-bold text-gray-900 hover:bg-[#a693d9] transition-colors"
+                    >
+                      확정하기
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {getGuideList().length > 0 && (
-                <div>
-                  <h4 className="mb-3 text-base font-bold text-gray-900">📌 AI 작성 가이드</h4>
-                  <ul className="space-y-1 text-sm text-gray-600">
-                    {getGuideList().map((guide, idx) => (
-                      <li key={idx}>• {guide}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
 
             {/* AI Correction Button (Floating) */}
-            <button className="fixed bottom-28 right-6 z-20 flex flex-col items-center justify-center gap-1 rounded-full bg-[#b4a0e5] px-4 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95">
+            <button
+              onClick={handleAiCorrectAll}
+              disabled={isAiCorrecting}
+              className="fixed bottom-28 right-6 z-20 flex flex-col items-center justify-center gap-1 rounded-full bg-[#b4a0e5] px-4 py-3 shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <svg
                 width="18"
                 height="18"
