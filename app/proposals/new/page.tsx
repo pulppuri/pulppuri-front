@@ -192,7 +192,7 @@ export default function NewProposalPage() {
 
       const result = await createProposal(payload)
 
-      router.push(`/proposals/${result.pid}`)
+      router.replace(`/proposals/${result.pid}`)
     } catch (error) {
       console.error("[v0] Error submitting proposal:", error)
       if (error instanceof Error) {
@@ -234,7 +234,7 @@ export default function NewProposalPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-[100dvh] flex-col bg-white">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between px-4 py-4">
@@ -258,7 +258,7 @@ export default function NewProposalPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
         {/* Step 1: Basic Info */}
         {currentStep === 1 && (
           <div className="space-y-6">
@@ -478,7 +478,7 @@ export default function NewProposalPage() {
 
         {/* Step 4: Final Summary */}
         {currentStep === 4 && (
-          <div className="space-y-6 pb-24">
+          <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b4a0e5] text-base font-bold text-white">
                 4
@@ -597,7 +597,7 @@ export default function NewProposalPage() {
       </div>
 
       {/* Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200 bg-white p-4">
+      <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white p-4">
         <button
           onClick={currentStep === 4 ? handleSubmit : handleNext}
           disabled={!canProceed() || (currentStep === 4 && isSubmitting)}

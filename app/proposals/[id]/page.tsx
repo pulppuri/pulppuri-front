@@ -120,7 +120,7 @@ export default function ProposalDetailPage() {
     return (
       <div className="flex min-h-screen flex-col bg-white">
         <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-          <button onClick={() => router.back()} className="text-foreground">
+          <button onClick={() => router.push("/proposals")} className="text-foreground">
             <ChevronLeft className="h-6 w-6" />
           </button>
           <h1 className="text-lg font-semibold">정책 제안</h1>
@@ -136,7 +136,7 @@ export default function ProposalDetailPage() {
     return (
       <div className="flex min-h-screen flex-col bg-white">
         <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-          <button onClick={() => router.back()} className="text-foreground">
+          <button onClick={() => router.push("/proposals")} className="text-foreground">
             <ChevronLeft className="h-6 w-6" />
           </button>
           <h1 className="text-lg font-semibold">정책 제안</h1>
@@ -158,7 +158,7 @@ export default function ProposalDetailPage() {
     return (
       <div className="flex min-h-screen flex-col bg-white">
         <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-          <button onClick={() => router.back()} className="text-foreground">
+          <button onClick={() => router.push("/proposals")} className="text-foreground">
             <ChevronLeft className="h-6 w-6" />
           </button>
           <h1 className="text-lg font-semibold">정책 제안</h1>
@@ -186,7 +186,7 @@ export default function ProposalDetailPage() {
     <div className="flex min-h-screen flex-col bg-white pb-8">
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-        <button onClick={() => router.back()} className="text-foreground">
+        <button onClick={() => router.push("/proposals")} className="text-foreground">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <h1 className="text-lg font-semibold">정책 제안</h1>
