@@ -200,9 +200,14 @@ export default function NewProposalPage() {
       const result = await helperRevise(dto)
 
       setFieldStates({
-        problem: { status: "suggested", aiCorrectedText: result.problem },
-        method: { status: "suggested", aiCorrectedText: result.method },
-        effect: { status: "suggested", aiCorrectedText: result.effect },
+        problem:
+          result.problem !== problem ? { status: "suggested", aiCorrectedText: result.problem } : { status: "idle" },
+        method:
+          result.method !== solution ? { status: "suggested", aiCorrectedText: result.method } : { status: "idle" },
+        effect:
+          result.effect !== expectedEffect
+            ? { status: "suggested", aiCorrectedText: result.effect }
+            : { status: "idle" },
       })
     } catch (error) {
       console.error("[v0] AI correction error:", error)
@@ -236,9 +241,11 @@ export default function NewProposalPage() {
         }
         const result = await helperReviseField(fieldName, currentTexts)
 
+        const currentText = fieldName === "problem" ? problem : fieldName === "method" ? solution : expectedEffect
+
         setFieldStates((prev) => ({
           ...prev,
-          [fieldName]: { status: "suggested", aiCorrectedText: result },
+          [fieldName]: result !== currentText ? { status: "suggested", aiCorrectedText: result } : { status: "idle" },
         }))
       } catch (error) {
         console.error(`[v0] AI re-correction error for ${fieldName}:`, error)

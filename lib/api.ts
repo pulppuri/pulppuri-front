@@ -283,6 +283,83 @@ export async function createProposal(dto: CreateProposalDto): Promise<{ pid: num
 // Helper API (AI 교정)
 // ============================================================
 
+interface HelperLike {
+  title?: string
+  problem?: string
+  method?: string
+  effect?: string
+}
+
+/**
+ * /helper 응답에서 HelperLike 객체를 추출하는 강건한 파서
+ * - wrapper 키 후보: result, data, payload, output, response
+ * - 키 매핑: solution → method, expectedEffect → effect
+ * - DFS: 위 wrapper가 없으면 객체 내부를 탐색하여 problem/method/effect 키를 가진 객체를 찾음
+ */
+function extractHelperLike(raw: unknown): HelperLike | null {
+  if (!raw || typeof raw !== "object") return null
+
+  const obj = raw as Record<string, unknown>
+
+  // 1) wrapper 키 후보 시도
+  const wrapperKeys = ["result", "data", "payload", "output", "response"]
+  for (const key of wrapperKeys) {
+    if (obj[key] && typeof obj[key] === "object") {
+      const extracted = tryExtract(obj[key] as Record<string, unknown>)
+      if (extracted) return extracted
+    }
+  }
+
+  // 2) raw 자체가 HelperLike인지 확인
+  const directExtract = tryExtract(obj)
+  if (directExtract) return directExtract
+
+  // 3) DFS로 problem/method/effect 키를 가진 객체 찾기
+  const found = dfsFind(obj)
+  if (found) return found
+
+  return null
+}
+
+/**
+ * 객체에서 HelperLike 필드를 추출 (키 매핑 포함)
+ */
+function tryExtract(obj: Record<string, unknown>): HelperLike | null {
+  // problem, method(또는 solution), effect(또는 expectedEffect) 중 하나라도 있으면 성공
+  const problem = obj.problem as string | undefined
+  const method = (obj.method ?? obj.solution) as string | undefined
+  const effect = (obj.effect ?? obj.expectedEffect) as string | undefined
+  const title = obj.title as string | undefined
+
+  if (problem !== undefined || method !== undefined || effect !== undefined) {
+    return { title, problem, method, effect }
+  }
+  return null
+}
+
+/**
+ * DFS로 객체 내부를 탐색하여 problem/method/effect 키를 가진 객체를 찾음
+ */
+function dfsFind(obj: unknown, depth = 0): HelperLike | null {
+  if (depth > 5 || !obj || typeof obj !== "object") return null
+
+  const record = obj as Record<string, unknown>
+
+  // 현재 객체에서 추출 시도
+  const extracted = tryExtract(record)
+  if (extracted) return extracted
+
+  // 자식 객체 탐색
+  for (const value of Object.values(record)) {
+    if (value && typeof value === "object") {
+      const found = dfsFind(value, depth + 1)
+      if (found) return found
+    }
+  }
+
+  return null
+}
+
 /**
  * AI 텍스트 교정 (POST /helper)
  * 백엔드에서 교정된 텍스트를 반환
@@ -295,23 +372,28 @@ export async function helperRevise(dto: HelperDto): Promise<HelperDto> {
     const raw = await apiFetch<any>(API_ENDPOINTS.HELPER, {
       method: "POST",
       body: dto,
-      auth: false, // 인증 불필요로 시도, 실패 시 auth: true로 재시도 가능
+      auth: false,
     })
 
-    // 응답 파싱 (유연): raw / raw.result / raw.data 중 하나
-    const payload = raw?.result ?? raw?.data ?? raw
+    console.log("[helper] raw response:", raw)
 
-    // 응답 형식이 예상과 다르면 경고
-    if (!payload || typeof payload !== "object") {
-      console.warn("[helper] unexpected response shape", raw)
+    // 강건한 파서로 추출
+    const extracted = extractHelperLike(raw)
+
+    if (extracted) {
+      const mapped: HelperDto = {
+        title: extracted.title ?? dto.title,
+        problem: extracted.problem ?? dto.problem,
+        method: extracted.method ?? dto.method,
+        effect: extracted.effect ?? dto.effect,
+      }
+      console.log("[helper] mapped:", mapped)
+      return mapped
     }
 
-    return {
-      title: payload?.title ?? dto.title,
-      problem: payload?.problem ?? dto.problem,
-      method: payload?.method ?? dto.method,
-      effect: payload?.effect ?? dto.effect,
-    }
+    // fallback: 원본 반환
+    console.warn("[helper] 응답 파싱 실패로 fallback - raw:", raw)
+    return dto
   } catch (error) {
     console.error("[helper] revise failed", error)
     throw error
