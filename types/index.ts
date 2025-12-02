@@ -78,14 +78,18 @@ export interface ProposalSummary {
  */
 export interface ProposalDetail {
   id: number
+  eid?: number | null // 관련 정책 사례 ID
   title: string
   region?: string
   categories: string[]
   problem?: string
+  method?: string // 백엔드 필드명
   solution?: string
+  effect?: string
   expectedEffect?: string
   created_at?: string | number
   updated_at?: string | number
+  nickname?: string // 백엔드 필드명
   author?: {
     nickname: string
     region?: string
@@ -122,15 +126,14 @@ export interface CreateUserResponse {
 /**
  * CreateProposalRequest 타입 추가 (POST /proposals 요청 바디용)
  */
-export interface CreateProposalRequest {
+export interface CreateProposalDto {
   rid: number
   title: string
-  categories: string[]
+  eid?: number | null
   problem: string
-  solution: string
-  expectedEffect: string
-  selectedExampleIds: number[]
-  guidelineKey?: string | null
+  method: string
+  effect: string
+  tags: string[]
 }
 
 export interface User {

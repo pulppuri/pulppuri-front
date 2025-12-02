@@ -57,10 +57,10 @@ const PolicyDetailPage = () => {
 
         if (cancelled) return
 
-        if (!data || !data.example) {
+        if (!data) {
           setNotFound(true)
         } else {
-          setExample(data.example)
+          setExample(data)
           setNotFound(false)
         }
       } catch (err) {
@@ -71,6 +71,7 @@ const PolicyDetailPage = () => {
             setNotFound(true)
           } else {
             setErrorMsg("서버 오류가 발생했어요. 잠시 후 다시 시도해 주세요.")
+            console.error("[v0] Server error:", err.message)
           }
         } else {
           setErrorMsg("네트워크 상태를 확인하고 다시 시도해 주세요.")

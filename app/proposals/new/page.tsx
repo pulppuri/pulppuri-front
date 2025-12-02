@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
-import { fetchRegionId, createGuideline } from "@/lib/api"
+import { fetchRegionId, createGuideline, createProposal } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
-import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalRequest } from "@/types"
+import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalDto } from "@/types"
 
 type Step = 1 | 2 | 3 | 4
 
@@ -180,23 +180,26 @@ export default function NewProposalPage() {
     setIsSubmitting(true)
 
     try {
-      const payload: CreateProposalRequest = {
+      const payload: CreateProposalDto = {
         rid: resolvedRid,
         title: title.trim(),
-        categories: selectedCategories,
+        eid: selectedExamples.length > 0 ? selectedExamples[0] : null,
         problem: problem.trim(),
-        solution: solution.trim(),
-        expectedEffect: expectedEffect.trim(),
-        selectedExampleIds: selectedExamples,
-        guidelineKey: lastGuidelineKeyRef.current,
+        method: solution.trim(),
+        effect: expectedEffect.trim(),
+        tags: selectedCategories,
       }
 
-      console.log("[v0] Proposal payload (API 미구현):", payload)
-      alert("제안 등록 기능은 현재 준비 중입니다.")
-      router.push("/proposals")
+      const result = await createProposal(payload)
+
+      router.push(`/proposals/${result.pid}`)
     } catch (error) {
       console.error("[v0] Error submitting proposal:", error)
-      alert("오류가 발생했습니다. 다시 시도해주세요.")
+      if (error instanceof Error) {
+        alert(`제안 등록 중 오류가 발생했습니다: ${error.message}`)
+      } else {
+        alert("오류가 발생했습니다. 다시 시도해주세요.")
+      }
     } finally {
       setIsSubmitting(false)
     }

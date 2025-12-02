@@ -8,6 +8,7 @@ import type {
   ExampleDetail,
   ProposalSummary,
   ProposalDetail,
+  CreateProposalDto,
 } from "@/types"
 
 export const API_CONFIG = {
@@ -28,12 +29,17 @@ export const API_ENDPOINTS = {
   GET_EXAMPLES: "/examples", // GET: ?q=&page= → { examples: ExampleSummary[] }
   // CHANGE: 함수형 엔드포인트 추가: GET /examples/{id}
   GET_EXAMPLE_DETAIL: (id: number | string) => `/examples/${id}`,
+  GET_EXAMPLE: (eid: number | string) => `/examples/${eid}`,
 
   // Guidelines
   CREATE_GUIDELINE: "/guidelines", // POST: { title, rid, categories, problem } → GuidelinesResponse
 
+  // Proposals (정책 제안)
   GET_PROPOSALS: "/proposals", // GET: ?q=&page= → { proposals: ProposalSummary[] }
-  GET_PROPOSAL_DETAIL: (id: number | string) => `/proposals/${id}`, // GET → { proposal: ProposalDetail }
+  // CHANGE: 함수형 엔드포인트 추가: GET /proposals/{id}
+  GET_PROPOSAL_DETAIL: (id: number | string) => `/proposals/${id}`,
+  GET_PROPOSAL: (pid: number | string) => `/proposals/${pid}`,
+  POST_PROPOSAL: "/proposals",
 }
 
 // ============================================================
@@ -102,7 +108,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchO
   if (auth) {
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null
     if (token) {
-      headers.set("Authorization", token)
+      headers.set("authorization", token)
     }
   }
 
@@ -200,9 +206,19 @@ export async function fetchExamples(query?: string, page = 1): Promise<{ example
  * 정책 사례 상세 조회 (GET /examples/{id})
  * @returns { example: ExampleDetail }
  */
-export async function fetchExampleDetail(id: number | string): Promise<{ example: ExampleDetail }> {
+export async function fetchExampleDetail(id: number | string): Promise<ExampleDetail> {
   const endpoint = API_ENDPOINTS.GET_EXAMPLE_DETAIL(id)
-  return apiFetch<{ example: ExampleDetail }>(endpoint, { auth: true })
+  return apiFetch<ExampleDetail>(endpoint, { auth: true })
+}
+
+/**
+ * 정책 사례 상세 조회 (GET /examples/{eid})
+ * 백엔드가 wrapper 없이 ExampleDetail 객체를 그대로 반환함
+ * @returns ExampleDetail (wrapper 없음)
+ */
+export async function fetchExample(eid: number | string): Promise<ExampleDetail> {
+  const endpoint = API_ENDPOINTS.GET_EXAMPLE(eid)
+  return apiFetch<ExampleDetail>(endpoint, { auth: true })
 }
 
 /**
@@ -238,6 +254,28 @@ export async function fetchProposals(query?: string, page = 1): Promise<{ propos
 export async function fetchProposalDetail(id: number | string): Promise<{ proposal: ProposalDetail }> {
   const endpoint = API_ENDPOINTS.GET_PROPOSAL_DETAIL(id)
   return apiFetch<{ proposal: ProposalDetail }>(endpoint, { auth: true })
+}
+
+/**
+ * 정책 제안 상세 조회 (GET /proposals/{pid})
+ * @returns { proposal: ProposalDetail } (wrapper 있음)
+ */
+export async function fetchProposal(pid: number | string): Promise<{ proposal: ProposalDetail }> {
+  const endpoint = API_ENDPOINTS.GET_PROPOSAL(pid)
+  return apiFetch<{ proposal: ProposalDetail }>(endpoint, { auth: true })
+}
+
+/**
+ * 정책 제안 생성 (POST /proposals)
+ * 새로 추가
+ * @returns { pid: number }
+ */
+export async function createProposal(dto: CreateProposalDto): Promise<{ pid: number }> {
+  return apiFetch<{ pid: number }>(API_ENDPOINTS.POST_PROPOSAL, {
+    method: "POST",
+    body: dto,
+    auth: true,
+  })
 }
 
 // ============================================================

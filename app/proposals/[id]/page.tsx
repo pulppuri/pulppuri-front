@@ -68,6 +68,7 @@ export default function ProposalDetailPage() {
           setNotFound(true)
         } else if (err instanceof Error && err.message.includes("API Error")) {
           setErrorMsg("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+          console.error("[v0] Server error:", err.message)
         } else {
           setErrorMsg("네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.")
         }
@@ -177,6 +178,10 @@ export default function ProposalDetailPage() {
 
   if (!proposal) return null
 
+  const solutionText = proposal.method || proposal.solution || "내용이 없습니다."
+  const effectText = proposal.effect || proposal.expectedEffect || "내용이 없습니다."
+  const authorName = proposal.nickname || proposal.author?.nickname || "익명"
+
   return (
     <div className="flex min-h-screen flex-col bg-white pb-8">
       {/* Header */}
@@ -204,7 +209,7 @@ export default function ProposalDetailPage() {
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-full bg-[#d4c5f0]" />
             <div>
-              <p className="font-medium text-[#1a1a1a]">{proposal.author?.nickname || "익명"}</p>
+              <p className="font-medium text-[#1a1a1a]">{authorName}</p>
               <p className="text-sm text-[#999999]">{formatDate(proposal.created_at)}</p>
             </div>
           </div>
@@ -234,22 +239,31 @@ export default function ProposalDetailPage() {
             <p className="text-base leading-relaxed text-[#666666]">{proposal.problem || "내용이 없습니다."}</p>
           </div>
 
-          {/* Section 2: Related Policy Examples - TODO: backend not implemented */}
+          {/* Section 2: Related Policy Examples */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">2. 관련 정책 사례</h3>
-            <p className="text-sm text-[#999999]">관련 정책 사례가 아직 없습니다.</p>
+            {proposal.eid ? (
+              <button
+                onClick={() => router.push(`/policies/${proposal.eid}`)}
+                className="w-full rounded-xl border border-[#b4a0e5] bg-white py-3 text-center font-medium text-[#7c6aad] hover:bg-[#f8f5ff] transition-colors"
+              >
+                관련 정책 사례 보러가기
+              </button>
+            ) : (
+              <p className="text-sm text-[#999999]">관련 정책 사례가 아직 없습니다.</p>
+            )}
           </div>
 
           {/* Section 3: Solution */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">3. 해결 방안 제시</h3>
-            <p className="text-base leading-relaxed text-[#666666]">{proposal.solution || "내용이 없습니다."}</p>
+            <p className="text-base leading-relaxed text-[#666666]">{solutionText}</p>
           </div>
 
           {/* Section 4: Expected Effects */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-[#1a1a1a]">4. 기대 효과</h3>
-            <p className="text-base leading-relaxed text-[#666666]">{proposal.expectedEffect || "내용이 없습니다."}</p>
+            <p className="text-base leading-relaxed text-[#666666]">{effectText}</p>
           </div>
         </div>
 
