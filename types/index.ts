@@ -120,6 +120,41 @@ export interface CreateUserResponse {
 }
 
 // ============================================================
+// Helper API (AI 교정)
+// ============================================================
+
+/**
+ * POST /helper 요청 바디
+ */
+export interface HelperDto {
+  title: string
+  problem: string
+  method: string
+  effect: string
+}
+
+/**
+ * POST /helper 응답 (유연한 파싱 필요)
+ */
+export type HelperResponse = Partial<HelperDto> | { result?: Partial<HelperDto>; data?: Partial<HelperDto> }
+
+// ============================================================
+// AI 교정 기능 타입 (프론트엔드용)
+// ============================================================
+
+export interface ReviseProposalInput {
+  problem: string
+  method: string
+  effect: string
+}
+
+export interface ReviseProposalOutput {
+  problem: string
+  method: string
+  effect: string
+}
+
+// ============================================================
 // 프론트엔드 전용 타입 (UI/온보딩용)
 // ============================================================
 

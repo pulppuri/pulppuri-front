@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Check, ChevronDown, Loader2, RefreshCw } from "lucide-react"
 import { POLICY_CATEGORIES, OKCHEON_REGIONS } from "@/lib/constants"
-import { fetchRegionId, createGuideline, createProposal, reviseProposalText, reviseProposalField } from "@/lib/api"
+import { fetchRegionId, createGuideline, createProposal, helperRevise, helperReviseField } from "@/lib/api"
 import { requireAuth } from "@/lib/auth"
-import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalDto } from "@/types"
+import type { PolicyCategory, GuidelinesResponse, ExampleSummary, CreateProposalDto, HelperDto } from "@/types"
 import AiEditableField, { type FieldStatus } from "@/components/AiEditableField"
 
 type Step = 1 | 2 | 3 | 4
@@ -190,11 +190,14 @@ export default function NewProposalPage() {
     })
 
     try {
-      const result = await reviseProposalText({
+      // helperRevise API 호출
+      const dto: HelperDto = {
+        title: title.trim(),
         problem: problem,
         method: solution,
         effect: expectedEffect,
-      })
+      }
+      const result = await helperRevise(dto)
 
       setFieldStates({
         problem: { status: "suggested", aiCorrectedText: result.problem },
@@ -203,6 +206,7 @@ export default function NewProposalPage() {
       })
     } catch (error) {
       console.error("[v0] AI correction error:", error)
+      alert("서버 오류로 AI 교정에 실패했어요. 다시 시도해주세요.")
       // 에러 시 idle로 복귀
       setFieldStates({
         problem: { status: "idle" },
@@ -212,7 +216,7 @@ export default function NewProposalPage() {
     } finally {
       setIsAiCorrecting(false)
     }
-  }, [problem, solution, expectedEffect])
+  }, [title, problem, solution, expectedEffect])
 
   const handleReCorrectField = useCallback(
     async (fieldName: "problem" | "method" | "effect") => {
@@ -223,8 +227,14 @@ export default function NewProposalPage() {
       }))
 
       try {
-        const currentText = fieldName === "problem" ? problem : fieldName === "method" ? solution : expectedEffect
-        const result = await reviseProposalField(fieldName, currentText)
+        // helperReviseField는 전체 텍스트를 보내고 해당 필드만 추출
+        const currentTexts: HelperDto = {
+          title: title.trim(),
+          problem: problem,
+          method: solution,
+          effect: expectedEffect,
+        }
+        const result = await helperReviseField(fieldName, currentTexts)
 
         setFieldStates((prev) => ({
           ...prev,
@@ -232,6 +242,7 @@ export default function NewProposalPage() {
         }))
       } catch (error) {
         console.error(`[v0] AI re-correction error for ${fieldName}:`, error)
+        alert("서버 오류로 AI 교정에 실패했어요. 다시 시도해주세요.")
         setFieldStates((prev) => ({
           ...prev,
           [fieldName]: { status: "idle" },
@@ -240,7 +251,7 @@ export default function NewProposalPage() {
         setIsAiCorrecting(false)
       }
     },
-    [problem, solution, expectedEffect],
+    [title, problem, solution, expectedEffect],
   )
 
   const handleConfirmField = useCallback((fieldName: "problem" | "method" | "effect") => {

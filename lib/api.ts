@@ -9,8 +9,7 @@ import type {
   ProposalSummary,
   ProposalDetail,
   CreateProposalDto,
-  ReviseProposalInput,
-  ReviseProposalOutput,
+  HelperDto,
 } from "@/types"
 
 export const API_CONFIG = {
@@ -29,7 +28,6 @@ export const API_ENDPOINTS = {
 
   // Examples (정책 사례)
   GET_EXAMPLES: "/examples", // GET: ?q=&page= → { examples: ExampleSummary[] }
-  // CHANGE: 함수형 엔드포인트 추가: GET /examples/{id}
   GET_EXAMPLE_DETAIL: (id: number | string) => `/examples/${id}`,
   GET_EXAMPLE: (eid: number | string) => `/examples/${eid}`,
 
@@ -38,10 +36,11 @@ export const API_ENDPOINTS = {
 
   // Proposals (정책 제안)
   GET_PROPOSALS: "/proposals", // GET: ?q=&page= → { proposals: ProposalSummary[] }
-  // CHANGE: 함수형 엔드포인트 추가: GET /proposals/{id}
   GET_PROPOSAL_DETAIL: (id: number | string) => `/proposals/${id}`,
   GET_PROPOSAL: (pid: number | string) => `/proposals/${pid}`,
   POST_PROPOSAL: "/proposals",
+
+  HELPER: "/helper", // POST: HelperDto → HelperDto (교정된 텍스트)
 }
 
 // ============================================================
@@ -281,76 +280,56 @@ export async function createProposal(dto: CreateProposalDto): Promise<{ pid: num
 }
 
 // ============================================================
-// AI 교정 기능 (Mock 구현)
-// TODO: 실제 LLM 엔드포인트 연동 시 이 함수를 수정
+// Helper API (AI 교정)
 // ============================================================
 
 /**
- * AI 텍스트 교정 (Mock)
- * 실제 LLM 연동 시 이 함수를 수정
- * @param input - 교정할 텍스트 (problem, method, effect)
- * @returns 교정된 텍스트
+ * AI 텍스트 교정 (POST /helper)
+ * 백엔드에서 교정된 텍스트를 반환
+ * @param dto - 교정할 텍스트 { title, problem, method, effect }
+ * @returns 교정된 텍스트 { title, problem, method, effect }
  */
-export async function reviseProposalText(input: ReviseProposalInput): Promise<ReviseProposalOutput> {
-  // TODO: 실제 LLM 엔드포인트 연동
-  // 현재는 Mock 구현: 간단한 문장 다듬기 시뮬레이션
+export async function helperRevise(dto: HelperDto): Promise<HelperDto> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await apiFetch<any>(API_ENDPOINTS.HELPER, {
+      method: "POST",
+      body: dto,
+      auth: false, // 인증 불필요로 시도, 실패 시 auth: true로 재시도 가능
+    })
 
-  await new Promise((resolve) => setTimeout(resolve, 1200 + Math.random() * 800))
+    // 응답 파싱 (유연): raw / raw.result / raw.data 중 하나
+    const payload = raw?.result ?? raw?.data ?? raw
 
-  const mockRevise = (text: string): string => {
-    if (!text.trim()) return text
-
-    let revised = text
-
-    // 간단한 교정 규칙 적용 (mock)
-    // 1. 문장 끝에 마침표 추가
-    if (
-      revised.trim() &&
-      !revised.trim().endsWith(".") &&
-      !revised.trim().endsWith("요") &&
-      !revised.trim().endsWith("다")
-    ) {
-      revised = revised.trim() + "."
+    // 응답 형식이 예상과 다르면 경고
+    if (!payload || typeof payload !== "object") {
+      console.warn("[helper] unexpected response shape", raw)
     }
 
-    // 2. "~해요" -> "~합니다" 변환 (일부)
-    revised = revised.replace(/힘들어요/g, "어려움을 겪고 있습니다")
-    revised = revised.replace(/없어요/g, "부족합니다")
-    revised = revised.replace(/좋겠어요/g, "기대됩니다")
-
-    // 3. 접속사 추가
-    if (revised.includes("그래서") === false && revised.length > 20) {
-      revised = revised.replace(/\. /, ". 따라서 ")
+    return {
+      title: payload?.title ?? dto.title,
+      problem: payload?.problem ?? dto.problem,
+      method: payload?.method ?? dto.method,
+      effect: payload?.effect ?? dto.effect,
     }
-
-    // 4. 강조 표현 추가
-    revised = revised.replace(/이동할 수 있/g, "편리하게 이동할 수 있")
-    revised = revised.replace(/설치해/g, "체계적으로 설치해")
-
-    return revised
-  }
-
-  return {
-    problem: mockRevise(input.problem),
-    method: mockRevise(input.method),
-    effect: mockRevise(input.effect),
+  } catch (error) {
+    console.error("[helper] revise failed", error)
+    throw error
   }
 }
 
 /**
- * 단일 필드 AI 교정 (Mock)
+ * 단일 필드 AI 교정 (POST /helper 사용)
+ * 백엔드가 필드별 API를 제공하지 않으므로 전체 호출 후 해당 필드만 추출
  * @param fieldName - 필드 이름 (problem, method, effect)
- * @param text - 교정할 텍스트
- * @returns 교정된 텍스트
+ * @param currentTexts - 현재 텍스트 { title, problem, method, effect }
+ * @returns 해당 필드의 교정된 텍스트
  */
-export async function reviseProposalField(fieldName: "problem" | "method" | "effect", text: string): Promise<string> {
-  const input: ReviseProposalInput = {
-    problem: fieldName === "problem" ? text : "",
-    method: fieldName === "method" ? text : "",
-    effect: fieldName === "effect" ? text : "",
-  }
-
-  const result = await reviseProposalText(input)
+export async function helperReviseField(
+  fieldName: "problem" | "method" | "effect",
+  currentTexts: HelperDto,
+): Promise<string> {
+  const result = await helperRevise(currentTexts)
   return result[fieldName]
 }
 
@@ -368,6 +347,7 @@ export function buildEndpoint(endpoint: string, params: Record<string, string | 
 // ============================================================
 // @deprecated - 하위 호환성을 위해 유지, apiFetch 사용 권장
 // ============================================================
+
 /** @deprecated apiFetch를 사용하세요 */
 export async function apiRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
@@ -387,4 +367,35 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}): P
     console.error("[v0] API request failed:", error)
     throw error
   }
+}
+
+/** @deprecated helperRevise를 사용하세요 */
+export async function reviseProposalText(input: {
+  problem: string
+  method: string
+  effect: string
+}): Promise<{ problem: string; method: string; effect: string }> {
+  // helperRevise로 위임
+  const result = await helperRevise({
+    title: "",
+    problem: input.problem,
+    method: input.method,
+    effect: input.effect,
+  })
+  return {
+    problem: result.problem,
+    method: result.method,
+    effect: result.effect,
+  }
+}
+
+/** @deprecated helperReviseField를 사용하세요 */
+export async function reviseProposalField(fieldName: "problem" | "method" | "effect", text: string): Promise<string> {
+  const result = await helperRevise({
+    title: "",
+    problem: fieldName === "problem" ? text : "",
+    method: fieldName === "method" ? text : "",
+    effect: fieldName === "effect" ? text : "",
+  })
+  return result[fieldName]
 }
