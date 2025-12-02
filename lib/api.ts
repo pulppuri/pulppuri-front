@@ -129,13 +129,43 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchO
     throw new Error(`API Error ${response.status}: ${errorText}`)
   }
 
-  // 204 No Content 등 빈 응답 처리
-  const contentType = response.headers.get("content-type")
-  if (contentType && contentType.includes("application/json")) {
-    return response.json()
+  const contentType = response.headers.get("content-type") ?? ""
+  console.log(`[apiFetch] ${endpoint} content-type=${contentType}`)
+
+  // 204 No Content 또는 빈 바디 처리
+  const text = await response.text()
+  if (!text || text.trim() === "") {
+    console.log(`[apiFetch] parsedType=null (empty body)`)
+    return null as T
   }
 
-  return null as T
+  // application/json이면 바로 파싱
+  if (contentType.includes("application/json")) {
+    try {
+      const parsed = JSON.parse(text)
+      console.log(`[apiFetch] parsedType=${typeof parsed}`)
+      return parsed as T
+    } catch (e) {
+      console.warn(`[apiFetch] JSON parse failed for json content-type:`, e)
+      return text as T
+    }
+  }
+
+  // 그 외: 텍스트가 { 또는 [로 시작하면 JSON.parse 시도
+  const trimmed = text.trim()
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      console.log(`[apiFetch] parsedType=${typeof parsed} (parsed from text)`)
+      return parsed as T
+    } catch (e) {
+      console.warn(`[apiFetch] JSON parse failed for text response:`, e)
+    }
+  }
+
+  // 파싱 실패 시 text 그대로 반환
+  console.log(`[apiFetch] parsedType=string (raw text)`)
+  return text as T
 }
 
 // ============================================================
@@ -375,10 +405,22 @@ export async function helperRevise(dto: HelperDto): Promise<HelperDto> {
       auth: false,
     })
 
+    console.log("[helper] raw typeof:", typeof raw)
     console.log("[helper] raw response:", raw)
 
+    let normalized = raw
+    if (typeof raw === "string") {
+      try {
+        normalized = JSON.parse(raw)
+        console.log("[helper] parsed string to object")
+      } catch (e) {
+        console.warn("[helper] raw is string but JSON.parse failed:", e)
+      }
+    }
+    console.log("[helper] normalized typeof:", typeof normalized)
+
     // 강건한 파서로 추출
-    const extracted = extractHelperLike(raw)
+    const extracted = extractHelperLike(normalized)
 
     if (extracted) {
       const mapped: HelperDto = {
