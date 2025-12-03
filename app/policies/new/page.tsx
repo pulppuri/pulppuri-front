@@ -59,7 +59,26 @@ export default function NewPolicyPage() {
       }
     } catch (error) {
       console.error("[v0] Autofill error:", error)
-      alert("요약 생성에 실패했습니다. 직접 입력해주세요.")
+
+      let errorMessage = "요약 생성에 실패했습니다. 직접 입력해주세요."
+
+      if (error instanceof Error) {
+        const msg = error.message.toLowerCase()
+
+        if (msg.includes("timeout") || msg.includes("aborted")) {
+          errorMessage = "요청 시간이 초과되었습니다. 직접 입력해주세요."
+        } else if (msg.includes("ssl") || msg.includes("certificate")) {
+          errorMessage = "보안 연결 오류가 발생했습니다. 직접 입력해주세요."
+        } else if (msg.includes("connect") || msg.includes("network")) {
+          errorMessage = "네트워크 연결에 실패했습니다. 직접 입력해주세요."
+        } else if (msg.includes("403") || msg.includes("forbidden")) {
+          errorMessage = "해당 사이트에서 접근을 차단했습니다. 직접 입력해주세요."
+        } else if (msg.includes("404") || msg.includes("not found")) {
+          errorMessage = "기사를 찾을 수 없습니다. URL을 확인해주세요."
+        }
+      }
+
+      alert(errorMessage)
     } finally {
       setIsAutofilling(false)
     }
