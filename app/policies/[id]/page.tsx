@@ -6,6 +6,7 @@ import { ChevronLeft, Heart, Bookmark, RefreshCw } from "lucide-react" // Bookma
 import { requireAuth } from "@/lib/auth"
 import { fetchExampleDetail } from "@/lib/api"
 import type { ExampleDetail } from "@/types"
+import { MarkdownRenderer } from "@/components/MarkdownRenderer"
 
 const formatDate = (value: string | number | undefined): string | null => {
   if (!value) return null
@@ -232,12 +233,9 @@ const PolicyDetailPage = () => {
           {example.region && <span>{example.region}</span>}
         </div>
 
-        {/* 본문 컨텐츠 */}
-        {(example.content || example.body) && (
-          <div className="space-y-4 rounded-2xl bg-[#f5f5f5] p-5">
-            <p className="text-base leading-relaxed whitespace-pre-wrap">{example.content || example.body}</p>
-          </div>
-        )}
+        <div className="space-y-4 rounded-2xl bg-[#f5f5f5] p-5">
+          <MarkdownRenderer content={example.content || example.body} />
+        </div>
 
         {example.articleUrl ? (
           <div className="flex gap-3">
