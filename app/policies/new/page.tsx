@@ -7,8 +7,11 @@ import { ChevronLeft, LinkIcon, Loader2 } from "lucide-react"
 import type { PolicyCategory } from "@/types"
 import { requireAuth } from "@/lib/auth"
 import { fetchRegionId, createExample, autofillFromUrl } from "@/lib/api"
+import { MarkdownRenderer } from "@/components/MarkdownRenderer"
 
 const POLICY_FIELDS: PolicyCategory[] = ["교육", "교통", "주거", "농업", "청년", "경제", "문화", "보건/복지"]
+
+type EditorTab = "write" | "preview"
 
 export default function NewPolicyPage() {
   const router = useRouter()
@@ -19,6 +22,7 @@ export default function NewPolicyPage() {
   const [summary, setSummary] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAutofilling, setIsAutofilling] = useState(false)
+  const [editorTab, setEditorTab] = useState<EditorTab>("write")
 
   useEffect(() => {
     requireAuth(router)
@@ -34,7 +38,6 @@ export default function NewPolicyPage() {
       return
     }
 
-    // URL 유효성 검사
     try {
       new URL(linkUrl.trim())
     } catch {
@@ -49,7 +52,6 @@ export default function NewPolicyPage() {
 
       if (result?.summary) {
         setSummary(result.summary)
-        // 제목이 비어있고 응답에 title이 있으면 자동 채움
         if (!title.trim() && result.title) {
           setTitle(result.title)
         }
@@ -85,7 +87,6 @@ export default function NewPolicyPage() {
   }
 
   const handleSubmit = async () => {
-    // Validation
     if (!title.trim()) {
       alert("제목을 입력해주세요.")
       return
@@ -106,7 +107,6 @@ export default function NewPolicyPage() {
     setIsSubmitting(true)
 
     try {
-      // 1. region 이름으로 rid 조회
       const rid = await fetchRegionId(region.trim())
 
       if (!rid) {
@@ -115,13 +115,12 @@ export default function NewPolicyPage() {
         return
       }
 
-      // 2. POST /examples 호출
       const exDto = {
         rid,
         title: title.trim(),
-        thumbnail: null, // UI에서 썸네일 입력 없음
+        thumbnail: null,
         content: summary.trim(),
-        reference: linkUrl.trim() || "", // 링크가 없으면 빈 문자열
+        reference: linkUrl.trim() || "",
         tags: selectedFields,
       }
 
@@ -131,16 +130,13 @@ export default function NewPolicyPage() {
 
       console.log("[v0] Create example response:", response)
 
-      // 3. 성공 시 알림 및 리스트로 이동
       alert("정책 사례가 성공적으로 공유되었습니다!")
 
-      // router.refresh()로 리스트 갱신 후 이동
       router.push("/policies")
       router.refresh()
     } catch (error) {
       console.error("[v0] Error creating example:", error)
 
-      // 에러 메시지 분기
       if (error instanceof Error) {
         if (error.message.includes("401") || error.message.includes("403")) {
           alert("인증이 필요합니다. 다시 로그인해주세요.")
@@ -158,7 +154,6 @@ export default function NewPolicyPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-100 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => router.back()} className="flex h-10 w-10 items-center justify-center">
@@ -169,9 +164,7 @@ export default function NewPolicyPage() {
         </div>
       </div>
 
-      {/* Form Content */}
       <div className="flex-1 space-y-6 p-5">
-        {/* Section Title */}
         <h2 className="text-[18px] font-bold text-gray-900">정책 사례 공유하기</h2>
 
         <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-4 py-3">
@@ -209,7 +202,6 @@ export default function NewPolicyPage() {
           />
         </div>
 
-        {/* Policy Field */}
         <div className="space-y-3">
           <label className="text-[14px] font-medium text-gray-900">정책 분야(복수 선택 가능)</label>
           <div className="flex flex-wrap gap-2">
@@ -229,7 +221,6 @@ export default function NewPolicyPage() {
           </div>
         </div>
 
-        {/* Region - Changed from select dropdown to text input */}
         <div className="space-y-3">
           <label className="text-[14px] font-medium text-gray-900">정책 지역</label>
           <input
@@ -243,28 +234,72 @@ export default function NewPolicyPage() {
 
         <div className="space-y-3">
           <label className="text-[14px] font-medium text-gray-900">정책 사례 요약</label>
+
+          <div className="flex border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => setEditorTab("write")}
+              className={`px-4 py-2 text-[13px] font-medium transition-colors ${
+                editorTab === "write"
+                  ? "border-b-2 border-[#b69df8] text-[#b69df8]"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              작성
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorTab("preview")}
+              className={`px-4 py-2 text-[13px] font-medium transition-colors ${
+                editorTab === "preview"
+                  ? "border-b-2 border-[#b69df8] text-[#b69df8]"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              미리보기
+            </button>
+          </div>
+
           <div className="relative">
-            <textarea
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder={isAutofilling ? "요약 생성 중..." : "정책 사례에 대한 설명을 작성해주세요..."}
-              disabled={isAutofilling}
-              rows={8}
-              className="w-full rounded-lg border border-gray-200 bg-[#f5f5f5] px-4 py-3 text-[14px] text-gray-900 placeholder:text-gray-400 focus:border-[#b69df8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#b69df8] resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            {isAutofilling && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
-                <div className="flex items-center gap-2 text-[#b69df8]">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm font-medium">요약 생성 중...</span>
-                </div>
+            {editorTab === "write" ? (
+              <>
+                <textarea
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  placeholder="정책 사례에 대한 설명을 작성해주세요... (마크다운 지원)"
+                  disabled={isAutofilling}
+                  rows={8}
+                  className="w-full rounded-lg border border-gray-200 bg-[#f5f5f5] px-4 py-3 text-[14px] text-gray-900 placeholder:text-gray-400 focus:border-[#b69df8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#b69df8] resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                {isAutofilling && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-2 text-[#b69df8]">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-sm font-medium">요약 생성 중...</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="relative min-h-[200px] w-full rounded-lg border border-gray-200 bg-[#f5f5f5] px-4 py-3 overflow-auto">
+                {isAutofilling ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-2 text-[#b69df8]">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <span className="text-sm font-medium">요약 생성 중...</span>
+                    </div>
+                  </div>
+                ) : summary.trim() ? (
+                  <MarkdownRenderer content={summary} className="text-[14px] text-gray-900" />
+                ) : (
+                  <p className="text-[14px] text-gray-400">미리보기할 내용이 없습니다.</p>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Submit Button */}
       <div className="border-t border-gray-100 p-5">
         <Button
           onClick={handleSubmit}
