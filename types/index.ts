@@ -138,6 +138,46 @@ export interface HelperDto {
  */
 export type HelperResponse = Partial<HelperDto> | { result?: Partial<HelperDto>; data?: Partial<HelperDto> }
 
+/**
+ * POST /examples 요청 바디
+ */
+export interface ExDto {
+  rid: number
+  title: string
+  thumbnail?: string | null
+  content: string
+  reference: string // 기사 링크 URL
+  tags: string[]
+}
+
+/**
+ * POST /examples 응답 (유연한 파싱)
+ */
+export interface CreateExampleResponse {
+  id?: number
+  eid?: number
+  // 기타 필드는 백엔드 응답에 따라 추가 가능
+}
+
+/**
+ * POST /autofill 요청 바디
+ */
+export interface AutofillDto {
+  url: string
+}
+
+/**
+ * POST /autofill 응답 (유연한 파싱 필요)
+ */
+export type AutofillResponse = {
+  summary?: string
+  content?: string
+  title?: string
+  result?: string | { summary?: string; content?: string; title?: string }
+  data?: string | { summary?: string; content?: string; title?: string }
+  payload?: string | { summary?: string; content?: string; title?: string }
+}
+
 // ============================================================
 // AI 교정 기능 타입 (프론트엔드용)
 // ============================================================

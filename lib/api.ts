@@ -10,6 +10,8 @@ import type {
   ProposalDetail,
   CreateProposalDto,
   HelperDto,
+  ExDto,
+  CreateExampleResponse,
 } from "@/types"
 
 export const API_CONFIG = {
@@ -30,6 +32,7 @@ export const API_ENDPOINTS = {
   GET_EXAMPLES: "/examples", // GET: ?q=&page= → { examples: ExampleSummary[] }
   GET_EXAMPLE_DETAIL: (id: number | string) => `/examples/${id}`,
   GET_EXAMPLE: (eid: number | string) => `/examples/${eid}`,
+  CREATE_EXAMPLE: "/examples", // POST: ExDto → CreateExampleResponse
 
   // Guidelines
   CREATE_GUIDELINE: "/guidelines", // POST: { title, rid, categories, problem } → GuidelinesResponse
@@ -41,6 +44,8 @@ export const API_ENDPOINTS = {
   POST_PROPOSAL: "/proposals",
 
   HELPER: "/helper", // POST: HelperDto → HelperDto (교정된 텍스트)
+
+  AUTOFILL: "/autofill", // POST: { url } → 요약 텍스트
 }
 
 // ============================================================
@@ -56,7 +61,6 @@ export const API_ENDPOINTS_NOT_IMPLEMENTED = {
 
   // Examples
   GET_EXAMPLE_BY_ID: "/examples/:id",
-  CREATE_EXAMPLE: "/examples",
   UPDATE_EXAMPLE: "/examples/:id",
   DELETE_EXAMPLE: "/examples/:id",
   LIKE_EXAMPLE: "/examples/:id/like",
@@ -66,7 +70,6 @@ export const API_ENDPOINTS_NOT_IMPLEMENTED = {
 
   // Proposals
   GET_PROPOSAL_BY_ID: "/proposals/:id",
-  CREATE_PROPOSAL: "/proposals",
   LIKE_PROPOSAL: "/proposals/:id/like",
   BOOKMARK_PROPOSAL: "/proposals/:id/bookmark",
   GET_PROPOSAL_COMMENTS: "/proposals/:id/comments",
@@ -253,6 +256,19 @@ export async function fetchExample(eid: number | string): Promise<ExampleDetail>
 }
 
 /**
+ * 정책 사례 생성 (POST /examples)
+ * @param dto - ExDto 형태 { rid, title, thumbnail?, content, reference, tags }
+ * @returns CreateExampleResponse
+ */
+export async function createExample(dto: ExDto): Promise<CreateExampleResponse> {
+  return apiFetch<CreateExampleResponse>(API_ENDPOINTS.CREATE_EXAMPLE, {
+    method: "POST",
+    body: dto,
+    auth: true,
+  })
+}
+
+/**
  * 가이드라인 생성 (POST /guidelines)
  * @returns GuidelinesResponse
  */
@@ -344,7 +360,7 @@ function extractHelperLike(raw: unknown): HelperLike | null {
   const directExtract = tryExtract(obj)
   if (directExtract) return directExtract
 
-  // 3) DFS로 problem/method/effect 키를 가진 객체 찾기
+  // 3) DFS로 객체 내부를 탐색하여 problem/method/effect 키를 가진 객체 찾기
   const found = dfsFind(obj)
   if (found) return found
 
@@ -455,6 +471,124 @@ export async function helperReviseField(
 ): Promise<string> {
   const result = await helperRevise(currentTexts)
   return result[fieldName]
+}
+
+// ============================================================
+// URL 요약 생성 API (POST /autofill)
+// ============================================================
+
+/**
+ * /autofill 응답에서 요약 텍스트를 추출하는 강건한 파서
+ * - string이면 그대로 반환
+ * - 객체면 후보 키(summary, content, result, data, payload)에서 추출
+ * - 중첩 객체면 DFS로 문자열 찾기
+ */
+function extractAutofillContent(raw: unknown): { summary?: string; title?: string } | null {
+  // string이면 그대로 요약으로 사용
+  if (typeof raw === "string") {
+    const trimmed = raw.trim()
+    // JSON 문자열일 수 있으니 파싱 시도
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        return extractAutofillContent(parsed)
+      } catch {
+        // 파싱 실패하면 그냥 문자열로 사용
+      }
+    }
+    return { summary: trimmed }
+  }
+
+  if (!raw || typeof raw !== "object") return null
+
+  const obj = raw as Record<string, unknown>
+
+  // 직접 필드 체크
+  const candidateKeys = ["summary", "content", "result", "data", "payload", "text", "output"]
+
+  // title 추출
+  const title = typeof obj.title === "string" ? obj.title : undefined
+
+  // summary 추출
+  for (const key of candidateKeys) {
+    const val = obj[key]
+    if (typeof val === "string" && val.trim()) {
+      return { summary: val.trim(), title }
+    }
+    if (val && typeof val === "object") {
+      // 중첩 객체에서 추출 시도
+      const nested = extractAutofillContent(val)
+      if (nested?.summary) {
+        return { summary: nested.summary, title: nested.title || title }
+      }
+    }
+  }
+
+  // DFS로 첫 번째 긴 문자열 찾기 (최소 20자 이상)
+  const foundString = dfsFindString(obj)
+  if (foundString) {
+    return { summary: foundString, title }
+  }
+
+  return null
+}
+
+/**
+ * DFS로 객체 내에서 가장 긴 문자열 찾기
+ */
+function dfsFindString(obj: unknown, depth = 0): string | null {
+  if (depth > 5 || !obj) return null
+
+  if (typeof obj === "string" && obj.trim().length >= 20) {
+    return obj.trim()
+  }
+
+  if (typeof obj === "object") {
+    const record = obj as Record<string, unknown>
+    let longest: string | null = null
+
+    for (const value of Object.values(record)) {
+      const found = dfsFindString(value, depth + 1)
+      if (found && (!longest || found.length > longest.length)) {
+        longest = found
+      }
+    }
+
+    return longest
+  }
+
+  return null
+}
+
+/**
+ * URL에서 요약 자동 생성 (POST /autofill)
+ * @param url - 기사 URL
+ * @returns { summary?: string; title?: string } 또는 null
+ */
+export async function autofillFromUrl(url: string): Promise<{ summary?: string; title?: string } | null> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = await apiFetch<any>(API_ENDPOINTS.AUTOFILL, {
+      method: "POST",
+      body: { url },
+      auth: false,
+    })
+
+    console.log("[autofill] raw response:", raw)
+
+    const extracted = extractAutofillContent(raw)
+
+    if (extracted) {
+      console.log("[autofill] extracted:", extracted)
+      return extracted
+    }
+
+    console.warn("[autofill] 응답 파싱 실패 - raw:", raw)
+    return null
+  } catch (error) {
+    console.error("[autofill] error:", error)
+    throw error
+  }
 }
 
 // ============================================================
