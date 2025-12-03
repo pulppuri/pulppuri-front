@@ -175,7 +175,7 @@ export default function NewPolicyPage() {
             disabled={isAutofilling || !linkUrl.trim()}
             className="shrink-0 rounded-md bg-[#b69df8] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#a88de8] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {isAutofilling ? <Loader2 className="h-4 w-4 animate-spin" /> : "자동채우기"}
+            {isAutofilling ? <Loader2 className="h-4 w-4 animate-spin" /> : "자동 요약"}
           </button>
         </div>
 

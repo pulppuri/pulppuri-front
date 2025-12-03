@@ -45,7 +45,7 @@ export const API_ENDPOINTS = {
 
   HELPER: "/helper", // POST: HelperDto → HelperDto (교정된 텍스트)
 
-  AUTOFILL: "/autofill", // POST: { url } → 요약 텍스트
+  AUTOFILL: "/api/autofill", // POST: { url } → 요약 텍스트 (Next.js proxy)
 }
 
 // ============================================================
@@ -104,7 +104,13 @@ interface ApiFetchOptions extends Omit<RequestInit, "body"> {
 
 export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchOptions = {}): Promise<T> {
   const { body, auth = false, headers: customHeaders, ...restOptions } = options
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`
+
+  let url: string
+  if (endpoint.startsWith("/api/") || endpoint.startsWith("http")) {
+    url = endpoint
+  } else {
+    url = `${API_CONFIG.BASE_URL}${endpoint}`
+  }
 
   const headers = new Headers(customHeaders as HeadersInit)
   headers.set("Content-Type", "application/json")
@@ -129,6 +135,7 @@ export async function apiFetch<T = unknown>(endpoint: string, options: ApiFetchO
 
   if (!response.ok) {
     const errorText = await response.text()
+    console.error(`[apiFetch] non-ok: status=${response.status}, url=${url}, text=${errorText}`)
     throw new Error(`API Error ${response.status}: ${errorText}`)
   }
 
@@ -474,7 +481,7 @@ export async function helperReviseField(
 }
 
 // ============================================================
-// URL 요약 생성 API (POST /autofill)
+// URL 요약 생성 API (POST /api/autofill - Next.js proxy)
 // ============================================================
 
 /**
@@ -561,7 +568,7 @@ function dfsFindString(obj: unknown, depth = 0): string | null {
 }
 
 /**
- * URL에서 요약 자동 생성 (POST /autofill)
+ * URL에서 요약 자동 생성 (POST /api/autofill - Next.js proxy)
  * @param url - 기사 URL
  * @returns { summary?: string; title?: string } 또는 null
  */
@@ -587,6 +594,9 @@ export async function autofillFromUrl(url: string): Promise<{ summary?: string; 
     return null
   } catch (error) {
     console.error("[autofill] error:", error)
+    if (error instanceof Error) {
+      console.error("[autofill] error message:", error.message)
+    }
     throw error
   }
 }
